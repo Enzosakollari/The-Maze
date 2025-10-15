@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="Detyre_Kursi2:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Detyre_Kursi2_jar</output-path>
+    <root id="archive" name="Detyre_Kursi2.jar">
+      <element id="module-output" name="Detyre_Kursi2" />
+    </root>
+  </artifact>
+</component>

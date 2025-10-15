@@ -1,0 +1,23 @@
+com.mazegame.Main 
+
+pathIcon = loadImageFromClasspath("/path.png");
+wallIcon = loadImageFromClasspath("/wall1.jpg");
+treasureIcon = loadImageFromClasspath("/treasure.png");
+exitIcon = loadImageFromClasspath("/exit.png");
+playerIcon = loadImageFromClasspath("/player.png");
+
+private ImageIcon loadImageFromClasspath(String path) {
+    try {
+        InputStream is = getClass().getResourceAsStream(path);
+        if (is != null) {
+            byte[] bytes = is.readAllBytes();
+            ImageIcon icon = new ImageIcon(bytes);
+            // Scale the image to ICON_SIZE x ICON_SIZE
+            Image scaledImage = icon.getImage().getScaledInstance(ICON_SIZE, ICON_SIZE, Image.SCALE_SMOOTH);
+            return new ImageIcon(scaledImage);
+        }
+    } catch (Exception e) {
+        System.out.println("Error loading image: " + path);
+    }
+    return null;
+} 
