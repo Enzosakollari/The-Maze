@@ -8,6 +8,8 @@ import java.io.*;
 import java.util.Random;
 
 public class PixelGameGUI extends JFrame {
+    private transient ImageIcon[][] spriteFrames = new ImageIcon[4][3];
+
     private ShopPanel shopPanel;
 
     private PixelGameController gameController;
@@ -19,7 +21,7 @@ public class PixelGameGUI extends JFrame {
 
     // Menu navigation
     private int selectedOption = 0;
-    private final String[] menuOptions = {"START GAME" , "EXIT" };
+    private final String[] menuOptions = {"START GAME", "RESUME GAME"}; // Changed from "EXIT" to "RESUME GAME"
     private DifficultySelectionPanel difficultySelectionPanel;
     private int selectedDifficulty = 0;
     private final String[] difficultyOptions = {"EASY", "MEDIUM", "HARD"};
@@ -36,8 +38,8 @@ public class PixelGameGUI extends JFrame {
         setCustomIcon();
         initializeMainFrame();
     }
-    // Custom panel for difficulty selection (using your background image)
-// Custom panel for difficulty selection (using your background image and arrow icon)
+
+    // Custom panel for difficulty selection (using your background image and arrow icon)
     private class DifficultySelectionPanel extends JPanel {
         private int currentSelectedDifficulty = 0;
         private Image difficultyBackgroundImage;
@@ -68,8 +70,7 @@ public class PixelGameGUI extends JFrame {
             }
         }
 
-        public void setSelectedDifficulty(int difficulty)
-        {
+        public void setSelectedDifficulty(int difficulty) {
             this.currentSelectedDifficulty = difficulty;
         }
 
@@ -114,6 +115,7 @@ public class PixelGameGUI extends JFrame {
             }
         }
     }
+
     private void loadResources() {
         try {
             // Load DragonSlayer font
@@ -198,6 +200,7 @@ public class PixelGameGUI extends JFrame {
         iconImage = img;
         System.out.println("Created fallback window icon");
     }
+
     private void createFallbackArrow() {
         // Create a simple fallback arrow if the image is missing
         BufferedImage img = new BufferedImage(40, 40, BufferedImage.TYPE_INT_ARGB);
@@ -349,7 +352,7 @@ public class PixelGameGUI extends JFrame {
                         break;
                     case KeyEvent.VK_ENTER:
                     case KeyEvent.VK_SPACE:
-                        showDifficultySelection(); // CHANGED: Go to difficulty selection
+                        showDifficultySelection();
                         break;
                     case KeyEvent.VK_ESCAPE:
                         showMainMenu();
@@ -361,43 +364,54 @@ public class PixelGameGUI extends JFrame {
         setFocusable(true);
         requestFocusInWindow();
     }
+
     private void handleMenuSelection() {
         switch (selectedOption) {
             case 0: // START GAME
                 showCharacterSelection();
                 break;
-            case 1: // EXIT
-                System.exit(0);
+            case 1: // RESUME GAME (was EXIT)
+                resumeGame();
                 break;
         }
     }
 
-    private void startNewGameWithSelectedCharacter() {
-        System.out.println("Starting new game with character: " + selectedCharacter);
+    // ADD THIS METHOD to resume game
+    private void resumeGame() {
+        String filename = "gamesave.dat";
+        File saveFile = new File(filename);
 
-        // Generate random maze size (25-35)
-        Random rand = new Random();
-        int size = 25 + rand.nextInt(11);
-        System.out.println("Creating maze size: " + size + "x" + size);
+        if (saveFile.exists()) {
+            // Load the saved game
+            PixelGameController loadedController = PixelGameController.loadGame(filename);
 
-        try {
-            // CHANGE THIS LINE - add difficulty parameter
-            gameController = new PixelGameController(size, size, selectedCharacter, 1); // Medium difficulty
-            initializeGamePanel();
-            setupGameInputHandling();
-            gameController.startGame();
+            if (loadedController != null) {
+                this.gameController = loadedController;
+                initializeGamePanel();
+                setupGameInputHandling();
 
-            mazePanel.requestFocusInWindow();
-            System.out.println("Game started successfully with character " + selectedCharacter);
+                // Restore the maze panel reference
+                gameController.setMazePanel(mazePanel);
 
-        } catch (Exception e) {
-            System.out.println("Error starting game: " + e.getMessage());
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error starting game: " + e.getMessage());
+                System.out.println("Game resumed from save file");
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Failed to load saved game!\nStarting new game instead.",
+                        "Load Error",
+                        JOptionPane.WARNING_MESSAGE);
+                showCharacterSelection(); // Fallback to new game
+            }
+        } else {
+            // No save file exists
+            JOptionPane.showMessageDialog(this,
+                    "No saved game found!\nPlease start a new game.",
+                    "No Save File",
+                    JOptionPane.INFORMATION_MESSAGE);
+            showCharacterSelection(); // Go to character selection
         }
     }
+
     // Custom panel for the menu
-// Custom panel for the menu
     private class MenuPanel extends JPanel {
         public MenuPanel() {
             setPreferredSize(new Dimension(800, 600));
@@ -440,7 +454,18 @@ public class PixelGameGUI extends JFrame {
 
                 // Draw menu option text
                 g2d.setFont(dragonSlayerFont.deriveFont(32f));
-                drawTextWithShadow(g2d, menuOptions[i], getWidth() / 2, yPos, color, shadowColor);
+
+                String optionText = menuOptions[i];
+
+                // Add indicator if RESUME GAME and save file exists
+                if (i == 1) { // RESUME GAME option
+                    File saveFile = new File("gamesave.dat");
+                    if (saveFile.exists()) {
+                        optionText = "RESUME GAME ●"; // Add a dot indicator
+                    }
+                }
+
+                drawTextWithShadow(g2d, optionText, getWidth() / 2, yPos, color, shadowColor);
             }
         }
 
@@ -454,6 +479,7 @@ public class PixelGameGUI extends JFrame {
             g2d.drawString(text, x - g2d.getFontMetrics().stringWidth(text) / 2, y);
         }
     }
+
     private void initializeGamePanel() {
         System.out.println("Initializing game panel...");
 
@@ -471,117 +497,14 @@ public class PixelGameGUI extends JFrame {
         System.out.println("Game panel initialized");
     }
 
-//    private void setupGameInputHandling() {
-//        System.out.println("Setting up game input handling...");
-//
-//        // Clear existing listeners
-//        KeyListener[] listeners = getKeyListeners();
-//        for (KeyListener listener : listeners) {
-//            removeKeyListener(listener);
-//        }
-//
-//        // Add key listener to the mazePanel
-//        mazePanel.addKeyListener(new KeyAdapter() {
-//            @Override
-//            public void keyPressed(KeyEvent e) {
-//                int keyCode = e.getKeyCode();
-//
-//                switch (keyCode) {
-//                    case KeyEvent.VK_UP:
-//                    case KeyEvent.VK_W:
-//                        keys[0] = true;
-//                        break;
-//                    case KeyEvent.VK_DOWN:
-//                    case KeyEvent.VK_S:
-//                        keys[1] = true;
-//                        break;
-//                    case KeyEvent.VK_LEFT:
-//                    case KeyEvent.VK_A:
-//                        keys[2] = true;
-//                        break;
-//                    case KeyEvent.VK_RIGHT:
-//                    case KeyEvent.VK_D:
-//                        keys[3] = true;
-//                        break;
-//                    case KeyEvent.VK_ESCAPE:
-//                        showPauseMenu();
-//                        break;
-//                    case KeyEvent.VK_F3:
-//                        if (gameController != null) {
-//                            gameController.debugEnemies();
-//                        }
-//                        break;
-//                    // ADD THIS: Space bar for directional throwing
-//                    case KeyEvent.VK_SPACE:
-//                        if (gameController != null) {
-//                            gameController.playerThrowDirectionalProjectile();
-//                        }
-//                        break;
-//                }
-//            }
-//
-//            @Override
-//            public void keyReleased(KeyEvent e) {
-//                int keyCode = e.getKeyCode();
-//
-//                switch (keyCode) {
-//                    case KeyEvent.VK_UP:
-//                    case KeyEvent.VK_W:
-//                        keys[0] = false;
-//                        break;
-//                    case KeyEvent.VK_DOWN:
-//                    case KeyEvent.VK_S:
-//                        keys[1] = false;
-//                        break;
-//                    case KeyEvent.VK_LEFT:
-//                    case KeyEvent.VK_A:
-//                        keys[2] = false;
-//                        break;
-//                    case KeyEvent.VK_RIGHT:
-//                    case KeyEvent.VK_D:
-//                        keys[3] = false;
-//                        break;
-//                }
-//            }
-//        });
-//
-//        // CRITICAL: Ensure mazePanel can get mouse focus for projectile throwing
-//        mazePanel.setFocusable(true);
-//        mazePanel.requestFocusInWindow();
-//
-//        // Enable mouse events on the maze panel
-//        mazePanel.addMouseListener(new MouseAdapter() {
-//            @Override
-//            public void mousePressed(MouseEvent e) {
-//                // Ensure the maze panel has focus when clicked
-//                mazePanel.requestFocusInWindow();
-//            }
-//        });
-//
-//        // Stop existing timer
-//        if (inputTimer != null) {
-//            inputTimer.stop();
-//        }
-//
-//        // Start game loop
-//        inputTimer = new Timer(16, e -> {
-//            if (gameController != null && gameController.isGameOngoing()) {
-//                gameController.updatePlayer(keys);
-//                mazePanel.repaint();
-//                checkGameStatus();
-//            }
-//        });
-//        inputTimer.start();
-//
-//        System.out.println("Game input handling setup complete");
-//    }
     private void showPauseMenu() {
         if (gameController == null || !gameController.isGameOngoing()) return;
 
-        String[] options = {"Resume", "Music ON/OFF", "Restart", "Main Menu", "Exit"};
+        String[] options = {"Resume", "Save Game", "Load Game", "Music ON/OFF", "Restart", "Main Menu", "Exit"};
         int choice = JOptionPane.showOptionDialog(this,
                 "Game Paused\n\nTreasures: " + gameController.getPlayer().getTreasuresCollected() +
-                        "\nPoints: " + gameController.getPlayer().getPoints(),
+                        "\nPoints: " + gameController.getPlayer().getPoints() +
+                        "\nShards: " + gameController.getPlayer().getShards(),
                 "Game Paused",
                 JOptionPane.DEFAULT_OPTION,
                 JOptionPane.INFORMATION_MESSAGE,
@@ -590,19 +513,26 @@ public class PixelGameGUI extends JFrame {
                 options[0]);
 
         switch (choice) {
-            case 1: // Music ON/OFF
-                toggleMusic();
+            case 1: // Save Game
+                saveGame();
                 showPauseMenu(); // Show menu again
                 return;
-            case 2: // Restart
-                gameController.stopGame(); // Stop current music
-                startNewGameWithSelectedCharacter(); // Will start new music
+            case 2: // Load Game
+                loadGame();
                 break;
-            case 3: // Main Menu
-                gameController.stopGame(); // Stop music when going to menu
+            case 3: // Music ON/OFF
+                toggleMusic();
+                showPauseMenu();
+                return;
+            case 4: // Restart
+                gameController.stopGame();
+                startNewGameWithSelectedCharacterAndDifficulty();
+                break;
+            case 5: // Main Menu
+                gameController.stopGame();
                 showMainMenu();
                 break;
-            case 4: // Exit
+            case 6: // Exit
                 System.exit(0);
                 break;
             // case 0 is Resume - do nothing
@@ -628,6 +558,7 @@ public class PixelGameGUI extends JFrame {
             }
         }
     }
+
     public void showDifficultySelection() {
         if (gameController != null) {
             gameController.stopGame();
@@ -720,7 +651,9 @@ public class PixelGameGUI extends JFrame {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error starting game: " + e.getMessage());
         }
-    }    private void checkGameStatus() {
+    }
+
+    private void checkGameStatus() {
         if (gameController != null && !gameController.isGameOngoing()) {
             if (inputTimer != null) {
                 inputTimer.stop();
@@ -738,6 +671,7 @@ public class PixelGameGUI extends JFrame {
             endGameTimer.start();
         }
     }
+
     private void setupGameInputHandling() {
         System.out.println("Setting up game input handling...");
 
@@ -788,6 +722,14 @@ public class PixelGameGUI extends JFrame {
                         if (gameController != null && gameController.isGameOngoing()) {
                             showShop();
                         }
+                        break;
+                    case KeyEvent.VK_F5: // Save game
+                        if (gameController != null && gameController.isGameOngoing()) {
+                            saveGame();
+                        }
+                        break;
+                    case KeyEvent.VK_F9: // Load game
+                        loadGame();
                         break;
                 }
             }
@@ -847,6 +789,7 @@ public class PixelGameGUI extends JFrame {
 
         System.out.println("Game input handling setup complete");
     }
+
     private void showShop() {
         shopPanel = new ShopPanel(gameController);
 
@@ -862,7 +805,6 @@ public class PixelGameGUI extends JFrame {
     }
 
     // Add getter for maze panel in PixelGameController
-    // Add this method to PixelGameController:
     public PixelMazePanel getMazePanel() {
         return mazePanel;
     }
@@ -883,27 +825,32 @@ public class PixelGameGUI extends JFrame {
         // Ensure the end screen gets focus for input
         endPanel.requestFocusInWindow();
     }
-    public boolean saveGame(String filename) {
-        try (ObjectOutputStream oos = new ObjectOutputStream(
-                new FileOutputStream(filename))) {
-            oos.writeObject(this);
-            System.out.println("Game saved successfully: " + filename);
-            return true;
-        } catch (IOException e) {
-            System.out.println("Error saving game: " + e.getMessage());
-            return false;
+
+    // ADD THESE METHODS for save/load functionality
+    private void saveGame() {
+        String filename = "gamesave.dat";
+        if (gameController.saveGame(filename)) {
+            JOptionPane.showMessageDialog(this, "Game saved successfully!", "Save Game", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to save game!", "Save Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    public static PixelGameController loadGame(String filename) {
-        try (ObjectInputStream ois = new ObjectInputStream(
-                new FileInputStream(filename))) {
-            PixelGameController loadedGame = (PixelGameController) ois.readObject();
-            System.out.println("Game loaded successfully: " + filename);
-            return loadedGame;
-        } catch (IOException | ClassNotFoundException e) {
-            System.out.println("Error loading game: " + e.getMessage());
-            return null;
+    private void loadGame() {
+        String filename = "gamesave.dat";
+        PixelGameController loadedController = PixelGameController.loadGame(filename);
+
+        if (loadedController != null) {
+            this.gameController = loadedController;
+            initializeGamePanel();
+            setupGameInputHandling();
+
+            // Restore the maze panel reference
+            gameController.setMazePanel(mazePanel);
+
+            JOptionPane.showMessageDialog(this, "Game loaded successfully!", "Load Game", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to load game!", "Load Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 

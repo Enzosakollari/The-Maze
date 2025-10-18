@@ -7,17 +7,25 @@ import java.util.Random;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Iterator;
+import java.io.*;
 
 public class PixelGameController implements Serializable {
-    private PixelMazePanel mazePanel;
     private static final long serialVersionUID = 1L;
+
+    // Make transient fields that shouldn't be serialized
+    private transient PixelMazePanel mazePanel;
+    private transient SoundManager soundManager;
 
     private PixelPlayer player;
     private PixelMaze maze;
     private boolean gameOngoing;
     private Random random;
     private List<PixelEnemy> enemies;
-    private SoundManager soundManager;
+    private boolean paused = false;
+
+    // Add difficulty tracking for reloading
+    private int currentDifficulty;
+    private int currentCharacterIndex;
 
     public PixelGameController(int width, int height, int characterIndex, int difficulty) {
         this.random = new Random();
@@ -26,6 +34,8 @@ public class PixelGameController implements Serializable {
         this.enemies = new ArrayList<>();
         this.gameOngoing = false;
         this.soundManager = new SoundManager();
+        this.currentDifficulty = difficulty;
+        this.currentCharacterIndex = characterIndex;
 
         // DEBUG: Analyze maze tiles
         debugMazeTiles();
@@ -38,13 +48,19 @@ public class PixelGameController implements Serializable {
         comprehensiveEnemyDebug();
         debugLifePotions();
     }
+
     public PixelMazePanel getMazePanel() {
         return mazePanel;
+    }
+
+    public void setMazePanel(PixelMazePanel mazePanel) {
+        this.mazePanel = mazePanel;
     }
 
     public PixelGameController(int width, int height) {
         this(width, height, 0, 1); // Now calls the 4-parameter constructor
     }
+
     private void spawnEnemies(int difficulty) {
         System.out.println("=== SPAWNING ENEMIES FOR DIFFICULTY " + difficulty + " ===");
 
@@ -117,6 +133,7 @@ public class PixelGameController implements Serializable {
             System.out.println("WARNING: Could only spawn " + enemiesSpawned + " out of " + enemyCount + " enemies");
         }
     }
+
     private boolean isValidEnemySpawnPosition(float x, float y) {
         // ONLY check if not in wall - remove all distance restrictions
         if (maze.isWallAtPixel(x, y, 48, 64)) {
@@ -134,10 +151,14 @@ public class PixelGameController implements Serializable {
         }
 
         return true;
-    }    // Update the old spawnEnemies method to use the new one
+    }
+
+    // Update the old spawnEnemies method to use the new one
     private void spawnEnemies() {
         spawnEnemies(1); // Default to medium difficulty
-    }    public void debugMazeTiles() {
+    }
+
+    public void debugMazeTiles() {
         System.out.println("=== MAZE TILE ANALYSIS ===");
         char[][] grid = maze.getGrid();
         int pathCount = 0;
@@ -189,7 +210,9 @@ public class PixelGameController implements Serializable {
 
         player.setPosition(startX, startY);
         gameOngoing = true;
-        soundManager.startGameMusic();
+        if (soundManager != null) {
+            soundManager.startGameMusic();
+        }
 
         System.out.println("Pixel Maze Game Started!");
         System.out.println("Player start position: (" + startX + ", " + startY + ")");
@@ -281,8 +304,6 @@ public class PixelGameController implements Serializable {
     public void updatePlayer(boolean[] keys) {
         if (!gameOngoing || !player.isAlive() || paused) return; // Added paused check
 
-        if (!gameOngoing || !player.isAlive()) return;
-
         player.update(keys, maze);
 
         // Update projectiles and check collisions with enemies
@@ -338,17 +359,22 @@ public class PixelGameController implements Serializable {
         // Check for exit
         if (maze.isExitAtPixel(player.getX(), player.getY(), player.getWidth(), player.getHeight())) {
             gameOngoing = false;
-            soundManager.stopGameMusic();
+            if (soundManager != null) {
+                soundManager.stopGameMusic();
+            }
             System.out.println("Exit reached! Game over.");
         }
 
         // Check if player died
         if (!player.isAlive()) {
             gameOngoing = false;
-            soundManager.stopGameMusic();
+            if (soundManager != null) {
+                soundManager.stopGameMusic();
+            }
             System.out.println("Player died! Game over.");
         }
     }
+
     public void playerThrowDirectionalProjectile() {
         if (player != null && gameOngoing && player.isAlive()) {
             player.throwProjectileInFacingDirection();
@@ -426,6 +452,7 @@ public class PixelGameController implements Serializable {
         }
         System.out.println("=== END DEBUG ===");
     }
+
     private void applyDifficultySettings(int difficulty) {
         System.out.println("=== APPLYING DIFFICULTY SETTINGS ===");
         System.out.println("Difficulty level: " + difficulty);
@@ -469,7 +496,6 @@ public class PixelGameController implements Serializable {
     public boolean isGameOngoing() {
         return gameOngoing;
     }
-    private boolean paused = false;
 
     public void setPaused(boolean paused) {
         this.paused = paused;
@@ -477,5 +503,49 @@ public class PixelGameController implements Serializable {
 
     public boolean isPaused() {
         return paused;
+    }
+
+    // SAVE/LOAD METHODS
+    public boolean saveGame(String filename) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename))) {
+            oos.writeObject(this);
+            System.out.println("Game saved successfully to: " + filename);
+            return true;
+        } catch (IOException e) {
+            System.out.println("Error saving game: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static PixelGameController loadGame(String filename) {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filename))) {
+            PixelGameController controller = (PixelGameController) ois.readObject();
+            System.out.println("Game loaded successfully from: " + filename);
+
+            // Reinitialize transient fields
+            controller.soundManager = new SoundManager();
+            controller.random = new Random();
+
+            // Restart music if game was ongoing
+            if (controller.gameOngoing) {
+                controller.soundManager.startGameMusic();
+            }
+
+            return controller;
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("Error loading game: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    // Custom serialization to handle transient fields
+    private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+        ois.defaultReadObject();
+        // Reinitialize transient fields after deserialization
+        this.soundManager = new SoundManager();
+        this.random = new Random();
+        System.out.println("Transient fields reinitialized after loading");
     }
 }

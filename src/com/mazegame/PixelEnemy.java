@@ -3,16 +3,19 @@ package com.mazegame;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 
-public class PixelEnemy {
+public class PixelEnemy implements Serializable {
     private static final long serialVersionUID = 1L;
+    private transient ImageIcon[][] spriteFrames = new ImageIcon[4][3];
 
     private float x, y;
     private int width = 48, height = 64;
     private float speed = 2.5f;
     private Direction facing = Direction.DOWN;
 
-    private ImageIcon[][] spriteFrames = new ImageIcon[4][3];
     private int currentFrame = 0;
     private int animationCounter = 0;
     private int animationSpeed = 8; // Higher = slower animation
@@ -393,5 +396,15 @@ public class PixelEnemy {
     public int getEnemyType() { return enemyType; }
     public float getSpeed() {
         return speed;
+    }
+
+    // Custom serialization to reload sprites after loading
+    private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+        ois.defaultReadObject();
+        // Reinitialize transient fields after deserialization
+        spriteFrames = new ImageIcon[4][3];
+        // Reload sprites
+        loadSpriteFrames();
+        System.out.println("Enemy type " + enemyType + " sprites reloaded after deserialization");
     }
 }

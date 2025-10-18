@@ -12,7 +12,7 @@ public class PixelMaze implements Serializable {
     private int exitX, exitY;
     private int startX, startY;
     private int width, height;
-    private Random random;
+    private transient Random random; // Make Random transient
     private static final int TILE_SIZE = 64;
     private int lifePotionCount = 3; // Default number of life potions
     private int difficulty; // Add difficulty field
@@ -623,4 +623,13 @@ public class PixelMaze implements Serializable {
     public int getStartY() { return startY; }
     public List<int[]> getLifePotionPositions() { return lifePotionPositions; }
     public int getDifficulty() { return difficulty; }
+
+    // Custom serialization to handle transient fields
+    private void readObject(java.io.ObjectInputStream ois)
+            throws java.io.IOException, ClassNotFoundException {
+        ois.defaultReadObject();
+        // Reinitialize transient fields after deserialization
+        this.random = new Random();
+        System.out.println("PixelMaze transient fields reinitialized after loading");
+    }
 }

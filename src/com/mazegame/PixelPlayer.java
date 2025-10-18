@@ -2,16 +2,20 @@ package com.mazegame;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*; // Add this import for java.util.List
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
+import java.util.*;
 import java.awt.image.BufferedImage;
 
-public class PixelPlayer {
-    private float x, y;
+public class PixelPlayer implements Serializable {
+    private static final long serialVersionUID = 1L;
 
+    private float x, y;
     private int shards = 250;
     private int width = 48, height = 64;
     private float speed = 4.0f;
-    private float originalSpeed = 4.0f; // ADD THIS
+    private float originalSpeed = 4.0f;
     private Direction facing = Direction.DOWN;
 
     // Player stats
@@ -23,14 +27,14 @@ public class PixelPlayer {
     private long invulnerabilityEndTime = 0;
     private static final long INVULNERABILITY_DURATION = 2000; // 2 seconds
 
-    // Sprite frames for animation - 4 directions, 3 frames each
-    private ImageIcon[][] spriteFrames = new ImageIcon[4][3];
+    // Make spriteFrames transient since ImageIcon isn't serializable
+    private transient ImageIcon[][] spriteFrames = new ImageIcon[4][3];
     private int currentFrame = 0;
     private int animationCounter = 0;
     private int animationSpeed = 6; // Higher = slower animation
 
     // Projectile system
-    private java.util.List<Projectile> projectiles = new ArrayList<>(); // Use java.util.List
+    private java.util.List<Projectile> projectiles = new ArrayList<>();
     private long lastThrowTime = 0;
     private static final long THROW_COOLDOWN = 500; // milliseconds
 
@@ -39,13 +43,11 @@ public class PixelPlayer {
 
     private String projectileType = "blade"; // Default: "blade", can be "spell"
     private int projectileDamage = 1;
-    private static final long serialVersionUID = 1L;
-
 
     public PixelPlayer(int characterType) {
         this.characterType = characterType;
-        this.originalSpeed = 4.0f; // ADD THIS
-        this.speed = this.originalSpeed; // ADD THIS
+        this.originalSpeed = 4.0f;
+        this.speed = this.originalSpeed;
         loadSpriteFrames();
         System.out.println("Player created with character type: " + characterType);
     }
@@ -398,5 +400,15 @@ public class PixelPlayer {
 
     public float getSpeed() {
         return speed;
+    }
+
+    // Custom serialization to reload sprites after loading
+    private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+        ois.defaultReadObject();
+        // Reinitialize transient fields after deserialization
+        spriteFrames = new ImageIcon[4][3];
+        // Reload sprites
+        loadSpriteFrames();
+        System.out.println("Player sprites reloaded after deserialization");
     }
 }
