@@ -10,6 +10,10 @@ import java.awt.image.BufferedImage;
 
 public class PixelPlayer implements Serializable {
     private static final long serialVersionUID = 1L;
+    private boolean hasMap = false;
+    private boolean[][] exploredTiles;
+
+    private int mazeWidth, mazeHeight;
 
     private float x, y;
     private int shards = 250;
@@ -400,6 +404,73 @@ public class PixelPlayer implements Serializable {
 
     public float getSpeed() {
         return speed;
+    }
+    public void initializeMap(int mazeWidth, int mazeHeight) {
+        this.mazeWidth = mazeWidth;
+        this.mazeHeight = mazeHeight;
+        this.exploredTiles = new boolean[mazeHeight][mazeWidth];
+
+        // Mark starting position as explored
+        int startX = (int)(getX() / 64);
+        int startY = (int)(getY() / 64);
+        if (startX >= 0 && startX < mazeWidth && startY >= 0 && startY < mazeHeight) {
+            exploredTiles[startY][startX] = true;
+
+            // Also mark adjacent starting area
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    int adjX = startX + dx;
+                    int adjY = startY + dy;
+                    if (adjX >= 0 && adjX < mazeWidth && adjY >= 0 && adjY < mazeHeight) {
+                        exploredTiles[adjY][adjX] = true;
+                    }
+                }
+            }
+        }
+        System.out.println("Player map initialized for " + mazeWidth + "x" + mazeHeight + " maze");
+    }
+
+    public void setHasMap(boolean hasMap) {
+        this.hasMap = hasMap;
+        if (hasMap && exploredTiles == null) {
+            // Initialize explored tiles array when map is acquired later
+            exploredTiles = new boolean[mazeHeight][mazeWidth];
+            // Mark current position as explored
+            int currentX = (int)(getX() / 64);
+            int currentY = (int)(getY() / 64);
+            if (currentX >= 0 && currentX < mazeWidth && currentY >= 0 && currentY < mazeHeight) {
+                exploredTiles[currentY][currentX] = true;
+            }
+        }
+        System.out.println("Labyrinth Map: " + (hasMap ? "ACQUIRED" : "NOT OWNED"));
+    }
+
+    public boolean hasMap() {
+        return hasMap;
+    }
+
+    public void markPositionExplored(int x, int y) {
+        if (exploredTiles != null && x >= 0 && x < mazeWidth && y >= 0 && y < mazeHeight) {
+            exploredTiles[y][x] = true;
+        }
+    }
+
+    public boolean[][] getExploredTiles() {
+        return exploredTiles;
+    }
+
+    public int getExploredTileCount() {
+        if (exploredTiles == null) return 0;
+
+        int count = 0;
+        for (int y = 0; y < mazeHeight; y++) {
+            for (int x = 0; x < mazeWidth; x++) {
+                if (exploredTiles[y][x]) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
     // Custom serialization to reload sprites after loading

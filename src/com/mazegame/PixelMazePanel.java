@@ -8,6 +8,9 @@ import java.io.InputStream;
 
 public class PixelMazePanel extends JPanel {
     private static final int TILE_SIZE = 64;
+    private boolean showMiniMap = false;
+    private final int MINI_MAP_SIZE = 150;
+    private final int MINI_MAP_MARGIN = 10;
     private PixelGameController gameController;
     private ImageIcon pathIcon, wallIcon, treasureIcon, exitIcon;
     private boolean useImages = true;
@@ -150,12 +153,12 @@ public class PixelMazePanel extends JPanel {
         return a + (b - a) * t;
     }
 
+    // In PixelMazePanel.java - update the paintComponent method
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
 
-        // Enable anti-aliasing
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
@@ -165,6 +168,7 @@ public class PixelMazePanel extends JPanel {
         drawPlayer(g2d);
         drawEnemies(g2d);
         drawProjectiles(g2d);
+        drawMiniMap(g2d); // Add this line
         drawHUD(g2d);
     }
 
@@ -321,11 +325,29 @@ public class PixelMazePanel extends JPanel {
         }
     }
 
+    // In PixelMazePanel.java - update the drawHUD method
     private void drawHUD(Graphics2D g2d) {
         PixelPlayer player = gameController.getPlayer();
 
-        // Only draw life icons
+        // Draw life icons
         drawLifeIcons(g2d, player.getLives());
+
+        // Show map status and controls
+        if (player.hasMap()) {
+            g2d.setColor(Color.CYAN);
+            g2d.setFont(new Font("Arial", Font.BOLD, 12));
+            g2d.drawString("MAP: " + (showMiniMap ? "ON" : "OFF"), 15, getHeight() - 50);
+            g2d.drawString("Press M to toggle mini-map", 15, getHeight() - 35);
+        } else {
+            g2d.setColor(Color.YELLOW);
+            g2d.setFont(new Font("Arial", Font.PLAIN, 12));
+            g2d.drawString("Buy Labyrinth Map in Shop (B)", 15, getHeight() - 35);
+        }
+
+        // Optional: Keep the throwing instructions
+        g2d.setColor(new Color(255, 255, 255, 180));
+        g2d.setFont(new Font("Arial", Font.PLAIN, 12));
+        g2d.drawString("Click to throw daggers at enemies!", 15, getHeight() - 20);
 
         // Show invulnerability status if needed
         if (player.isInvulnerable()) {
@@ -333,11 +355,6 @@ public class PixelMazePanel extends JPanel {
             g2d.setFont(new Font("Arial", Font.BOLD, 16));
             g2d.drawString("INVULNERABLE", 150, 90);
         }
-
-        // Optional: Keep the throwing instructions
-        g2d.setColor(new Color(255, 255, 255, 180));
-        g2d.setFont(new Font("Arial", Font.PLAIN, 12));
-        g2d.drawString("Click to throw daggers at enemies!", 15, getHeight() - 20);
     }
     private void drawLifeIcons(Graphics2D g2d, int lives) {
         int startX = 20;
@@ -360,10 +377,100 @@ public class PixelMazePanel extends JPanel {
             }
         }
     }
+    // Add this method to toggle mini-map display
+    public void setShowMiniMap(boolean show) {
+        this.showMiniMap = show;
+        repaint();
+    }
+
+    // Add this method to draw the mini-map
+    private void drawMiniMap(Graphics2D g2d) {
+        if (!showMiniMap) return;
+
+        PixelMaze maze = gameController.getMaze();
+        PixelPlayer player = gameController.getPlayer();
+        if (maze == null || player == null) return;
+
+        // Position in top-right corner
+        int mapX = getWidth() - MINI_MAP_SIZE - MINI_MAP_MARGIN;
+        int mapY = MINI_MAP_MARGIN;
+
+        // Draw mini-map background
+        g2d.setColor(new Color(0, 0, 0, 180));
+        g2d.fillRect(mapX, mapY, MINI_MAP_SIZE, MINI_MAP_SIZE);
+        g2d.setColor(Color.WHITE);
+        g2d.drawRect(mapX, mapY, MINI_MAP_SIZE, MINI_MAP_SIZE);
+
+        char[][] grid = maze.getGrid();
+        int mazeWidth = maze.getWidth();
+        int mazeHeight = maze.getHeight();
+
+        // Calculate tile size for mini-map
+        float tileSize = Math.min((float)MINI_MAP_SIZE / mazeWidth, (float)MINI_MAP_SIZE / mazeHeight);
+
+        // Draw explored areas
+        boolean[][] exploredTiles = player.getExploredTiles();
+
+        for (int y = 0; y < mazeHeight; y++) {
+            for (int x = 0; x < mazeWidth; x++) {
+                int screenX = (int)(mapX + x * tileSize);
+                int screenY = (int)(mapY + y * tileSize);
+
+                // Only draw explored tiles or all tiles if player has map
+                if (exploredTiles != null && exploredTiles[y][x]) {
+                    char tileType = grid[y][x];
+                    Color tileColor = getMiniMapTileColor(tileType);
+                    g2d.setColor(tileColor);
+                    g2d.fillRect(screenX, screenY, (int)tileSize, (int)tileSize);
+                }
+            }
+        }
+
+        // Draw player position
+        int playerMapX = (int)(mapX + (player.getX() / TILE_SIZE) * tileSize);
+        int playerMapY = (int)(mapY + (player.getY() / TILE_SIZE) * tileSize);
+        g2d.setColor(Color.RED);
+        g2d.fillOval(playerMapX - 2, playerMapY - 2, 4, 4);
+
+        // Draw exit position (always visible if player has map)
+        if (player.hasMap()) {
+            for (int y = 0; y < mazeHeight; y++) {
+                for (int x = 0; x < mazeWidth; x++) {
+                    if (grid[y][x] == 'E') {
+                        int exitX = (int)(mapX + x * tileSize);
+                        int exitY = (int)(mapY + y * tileSize);
+                        g2d.setColor(Color.GREEN);
+                        g2d.fillRect(exitX, exitY, (int)tileSize, (int)tileSize);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Draw mini-map border and title
+        g2d.setColor(Color.YELLOW);
+        g2d.setFont(new Font("Arial", Font.BOLD, 10));
+        g2d.drawString("MINI-MAP", mapX + 5, mapY - 5);
+    }
+
+    private Color getMiniMapTileColor(char tileType) {
+        switch (tileType) {
+            case '.': case 'S': return new Color(150, 150, 150); // Path - gray
+            case '#': return new Color(50, 50, 50); // Wall - dark gray
+            case 'T': return Color.YELLOW; // Treasure
+            case 'E': return Color.GREEN; // Exit
+            case 'L': return Color.PINK; // Life potion
+            default: return Color.GRAY;
+        }
+    }
 
     public void stopRendering() {
         if (renderTimer != null) {
             renderTimer.stop();
         }
+    }
+    // Add this getter method to PixelMazePanel class
+    public boolean isMiniMapVisible() {
+        return showMiniMap;
     }
 }

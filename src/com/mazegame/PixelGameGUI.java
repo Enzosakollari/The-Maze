@@ -53,7 +53,16 @@ public class PixelGameGUI extends JFrame {
             setFocusable(true);
             loadDifficultyBackground();
         }
+        // In PixelGameGUI.java - inside the MenuPanel class, add this method
+        private void drawTextWithShadow(Graphics2D g2d, String text, int x, int y, Color textColor, Color shadowColor) {
+            // Draw shadow (slightly offset)
+            g2d.setColor(shadowColor);
+            g2d.drawString(text, x - g2d.getFontMetrics().stringWidth(text) / 2 + 2, y + 2);
 
+            // Draw main text
+            g2d.setColor(textColor);
+            g2d.drawString(text, x - g2d.getFontMetrics().stringWidth(text) / 2, y);
+        }
         private void loadDifficultyBackground() {
             try {
                 java.io.InputStream bgStream = getClass().getResourceAsStream("/general/difficulty.png");
@@ -74,44 +83,73 @@ public class PixelGameGUI extends JFrame {
             this.currentSelectedDifficulty = difficulty;
         }
 
+        // In PixelGameGUI.java - update the MenuPanel paintComponent method
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             Graphics2D g2d = (Graphics2D) g;
 
-            // Enable anti-aliasing
+            // Enable anti-aliasing for smoother text
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-            // Draw the difficulty background image
-            if (difficultyBackgroundImage != null) {
-                g2d.drawImage(difficultyBackgroundImage, 0, 0, getWidth(), getHeight(), this);
-            } else {
-                // Fallback
-                g2d.setColor(Color.BLACK);
-                g2d.fillRect(0, 0, getWidth(), getHeight());
-
-                // Draw fallback text if image is missing
-                g2d.setColor(Color.WHITE);
-                g2d.setFont(new Font("Arial", Font.BOLD, 48));
-                g2d.drawString("SELECT DIFFICULTY", getWidth()/2 - 180, 150);
-
-                g2d.setFont(new Font("Arial", Font.BOLD, 36));
-                g2d.drawString("EASY", getWidth()/2 - 50, 300);
-                g2d.drawString("MEDIUM", getWidth()/2 - 70, 380);
-                g2d.drawString("HARD", getWidth()/2 - 50, 460);
+            // Draw background image
+            if (backgroundImage != null) {
+                g2d.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
             }
 
-            // Draw arrow icon for selected option
-            if (arrowIcon != null) {
-                int yPos = optionYPositions[currentSelectedDifficulty] - 20; // Adjust Y position to center with text
-                g2d.drawImage(arrowIcon.getImage(), indicatorX, yPos, this);
+            // Check if save file exists
+            File saveFile = new File("gamesave.dat");
+            boolean saveExists = saveFile.exists();
+
+            // Draw menu options
+            g2d.setFont(dragonSlayerFont.deriveFont(32f));
+
+            // Only show "START GAME" and "RESUME GAME" options
+            String[] visibleOptions;
+            if (saveExists) {
+                visibleOptions = new String[]{"START GAME", "RESUME GAME"};
             } else {
-                // Fallback: red > text
-                g2d.setColor(Color.RED);
-                g2d.setFont(new Font("Arial", Font.BOLD, 36));
-                int yPos = optionYPositions[currentSelectedDifficulty];
-                g2d.drawString(">", indicatorX, yPos);
+                visibleOptions = new String[]{"START GAME"};
+            }
+
+            for (int i = 0; i < visibleOptions.length; i++) {
+                Color color = (i == selectedOption) ? new Color(255, 215, 0) : Color.WHITE;
+                Color shadowColor = (i == selectedOption) ? new Color(180, 150, 0) : new Color(50, 50, 50);
+
+                int yPos = 380 + i * 60;
+
+                // Draw selection indicator (arrow icon)
+                if (i == selectedOption && arrowIcon != null) {
+                    int arrowX = getWidth() / 2 - 200;
+                    int arrowY = yPos - 60;
+                    g2d.drawImage(arrowIcon.getImage(), arrowX, arrowY, this);
+                } else if (i == selectedOption) {
+                    // Fallback: > character
+                    g2d.setColor(new Color(255, 215, 0));
+                    g2d.setFont(dragonSlayerFont.deriveFont(36f));
+                    g2d.drawString(">", getWidth() / 2 - 180, yPos);
+                }
+
+                // Draw menu option text
+                g2d.setFont(dragonSlayerFont.deriveFont(32f));
+
+                String optionText = visibleOptions[i];
+
+                // Add indicator for RESUME GAME if save exists
+                if (saveExists && i == 1) {
+                    optionText = "RESUME GAME ●";
+                }
+
+                drawTextWithShadow(g2d, optionText, getWidth() / 2, yPos, color, shadowColor);
+            }
+
+            // Add hint about resume if save exists
+            if (saveExists) {
+                g2d.setColor(new Color(200, 200, 200, 180));
+                g2d.setFont(new Font("Arial", Font.PLAIN, 14));
+                g2d.drawString("Saved game detected - resume to continue where you left off",
+                        getWidth() / 2 - 200, 500);
             }
         }
     }
@@ -240,9 +278,20 @@ public class PixelGameGUI extends JFrame {
         return img;
     }
 
+    // In PixelGameGUI.java - add window listener for auto-save
     private void initializeMainFrame() {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setResizable(false);
+
+        // Add window listener for auto-save
+        // Add window listener for auto-save
+        // Add window listener for exit
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                showExitImage(); // Use our clean image-only exit
+            }
+        });
 
         // Show main menu immediately
         showMainMenu();
@@ -302,18 +351,23 @@ public class PixelGameGUI extends JFrame {
             removeKeyListener(listener);
         }
 
+        // In PixelGameGUI.java - update the menu key listener in setupMenuInputHandling
         addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
+                File saveFile = new File("gamesave.dat");
+                boolean saveExists = saveFile.exists();
+                int optionCount = saveExists ? 2 : 1; // Only count available options
+
                 switch (e.getKeyCode()) {
                     case KeyEvent.VK_UP:
                     case KeyEvent.VK_W:
-                        selectedOption = (selectedOption - 1 + menuOptions.length) % menuOptions.length;
+                        selectedOption = (selectedOption - 1 + optionCount) % optionCount;
                         repaint();
                         break;
                     case KeyEvent.VK_DOWN:
                     case KeyEvent.VK_S:
-                        selectedOption = (selectedOption + 1) % menuOptions.length;
+                        selectedOption = (selectedOption + 1) % optionCount;
                         repaint();
                         break;
                     case KeyEvent.VK_ENTER:
@@ -365,52 +419,71 @@ public class PixelGameGUI extends JFrame {
         requestFocusInWindow();
     }
 
+    // In PixelGameGUI.java - update the handleMenuSelection method
     private void handleMenuSelection() {
-        switch (selectedOption) {
-            case 0: // START GAME
+        File saveFile = new File("gamesave.dat");
+        boolean saveExists = saveFile.exists();
+
+        // Adjust selection based on available options
+        int actualSelection = saveExists ? selectedOption : 0;
+
+        switch (actualSelection) {
+            case 0: // START GAME (always first option)
                 showCharacterSelection();
                 break;
-            case 1: // RESUME GAME (was EXIT)
+            case 1: // RESUME GAME (only when save exists)
                 resumeGame();
                 break;
         }
     }
-
     // ADD THIS METHOD to resume game
+// In PixelGameGUI.java - update the resumeGame method
     private void resumeGame() {
         String filename = "gamesave.dat";
         File saveFile = new File(filename);
 
         if (saveFile.exists()) {
-            // Load the saved game
-            PixelGameController loadedController = PixelGameController.loadGame(filename);
+            try {
+                // Use static method to load the game
+                PixelGameController loadedController = PixelGameController.loadGame(filename);
 
-            if (loadedController != null) {
-                this.gameController = loadedController;
-                initializeGamePanel();
-                setupGameInputHandling();
+                if (loadedController != null) {
+                    this.gameController = loadedController;
+                    initializeGamePanel();
+                    setupGameInputHandling();
 
-                // Restore the maze panel reference
-                gameController.setMazePanel(mazePanel);
+                    // Make sure the maze panel reference is set
+                    if (mazePanel != null) {
+                        gameController.setMazePanel(mazePanel);
+                    }
 
-                System.out.println("Game resumed from save file");
-            } else {
+                    System.out.println("Game resumed successfully from save file");
+                    System.out.println("Player position: " + gameController.getPlayer().getX() + ", " + gameController.getPlayer().getY());
+                    System.out.println("Player lives: " + gameController.getPlayer().getLives());
+                    System.out.println("Player shards: " + gameController.getPlayer().getShards());
+
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                            "Save file is corrupted!\nStarting new game instead.",
+                            "Load Error",
+                            JOptionPane.WARNING_MESSAGE);
+                    showCharacterSelection();
+                }
+            } catch (Exception e) {
                 JOptionPane.showMessageDialog(this,
-                        "Failed to load saved game!\nStarting new game instead.",
+                        "Error loading save file: " + e.getMessage() + "\nStarting new game instead.",
                         "Load Error",
-                        JOptionPane.WARNING_MESSAGE);
-                showCharacterSelection(); // Fallback to new game
+                        JOptionPane.ERROR_MESSAGE);
+                showCharacterSelection();
             }
         } else {
-            // No save file exists
             JOptionPane.showMessageDialog(this,
                     "No saved game found!\nPlease start a new game.",
                     "No Save File",
                     JOptionPane.INFORMATION_MESSAGE);
-            showCharacterSelection(); // Go to character selection
+            showCharacterSelection();
         }
     }
-
     // Custom panel for the menu
     private class MenuPanel extends JPanel {
         public MenuPanel() {
@@ -480,6 +553,7 @@ public class PixelGameGUI extends JFrame {
         }
     }
 
+    // In PixelGameGUI.java - update initializeGamePanel method
     private void initializeGamePanel() {
         System.out.println("Initializing game panel...");
 
@@ -488,15 +562,22 @@ public class PixelGameGUI extends JFrame {
         mazePanel = new PixelMazePanel(gameController);
         setContentPane(mazePanel);
 
+        // SET THE MAZE PANEL REFERENCE IN THE CONTROLLER - ADD THIS LINE
+        gameController.setMazePanel(mazePanel);
+
         setPreferredSize(new Dimension(800, 600));
         pack();
         setLocationRelativeTo(null);
 
         revalidate();
         repaint();
-        System.out.println("Game panel initialized");
+
+        // Ensure the maze panel gets focus
+        mazePanel.requestFocusInWindow();
+        System.out.println("Game panel initialized - maze panel reference set in controller");
     }
 
+    // In PixelGameGUI.java - update showPauseMenu method
     private void showPauseMenu() {
         if (gameController == null || !gameController.isGameOngoing()) return;
 
@@ -504,7 +585,9 @@ public class PixelGameGUI extends JFrame {
         int choice = JOptionPane.showOptionDialog(this,
                 "Game Paused\n\nTreasures: " + gameController.getPlayer().getTreasuresCollected() +
                         "\nPoints: " + gameController.getPlayer().getPoints() +
-                        "\nShards: " + gameController.getPlayer().getShards(),
+                        "\nShards: " + gameController.getPlayer().getShards() +
+                        "\nLives: " + gameController.getPlayer().getLives() +
+                        (gameController.getPlayer().hasMap() ? "\nMap: Acquired" : "\nMap: Not owned"),
                 "Game Paused",
                 JOptionPane.DEFAULT_OPTION,
                 JOptionPane.INFORMATION_MESSAGE,
@@ -529,20 +612,22 @@ public class PixelGameGUI extends JFrame {
                 startNewGameWithSelectedCharacterAndDifficulty();
                 break;
             case 5: // Main Menu
+                // Auto-save when returning to main menu
+                if (gameController.isGameOngoing()) {
+                    saveGame();
+                }
                 gameController.stopGame();
                 showMainMenu();
                 break;
             case 6: // Exit
-                System.exit(0);
+                showExitImage(); // Use our clean image-only exit
                 break;
-            // case 0 is Resume - do nothing
         }
 
         if (mazePanel != null) {
             mazePanel.requestFocusInWindow();
         }
     }
-
     private void toggleMusic() {
         if (gameController != null) {
             SoundManager soundManager = gameController.getSoundManager();
@@ -717,8 +802,7 @@ public class PixelGameGUI extends JFrame {
                             gameController.playerThrowDirectionalProjectile();
                         }
                         break;
-                    // ADD THIS: B key for shop
-                    case KeyEvent.VK_B:
+                    case KeyEvent.VK_B: // Shop
                         if (gameController != null && gameController.isGameOngoing()) {
                             showShop();
                         }
@@ -730,6 +814,26 @@ public class PixelGameGUI extends JFrame {
                         break;
                     case KeyEvent.VK_F9: // Load game
                         loadGame();
+                        break;
+
+                    // ADD THIS CASE FOR MINI-MAP TOGGLE
+                    case KeyEvent.VK_M:
+                        if (gameController != null && gameController.isGameOngoing()) {
+                            PixelPlayer player = gameController.getPlayer();
+                            PixelMazePanel mazePanel = gameController.getMazePanel();
+
+                            if (player != null && player.hasMap()) {
+                                if (mazePanel != null) {
+                                    boolean currentState = mazePanel.isMiniMapVisible();
+                                    mazePanel.setShowMiniMap(!currentState);
+                                    System.out.println("Mini-map " + (!currentState ? "ON" : "OFF"));
+                                } else {
+                                    System.out.println("Maze panel not available yet. Try moving first.");
+                                }
+                            } else if (player != null && !player.hasMap()) {
+                                System.out.println("You need to purchase the Labyrinth Map from the shop first!");
+                            }
+                        }
                         break;
                 }
             }
@@ -789,7 +893,6 @@ public class PixelGameGUI extends JFrame {
 
         System.out.println("Game input handling setup complete");
     }
-
     private void showShop() {
         shopPanel = new ShopPanel(gameController);
 
@@ -836,25 +939,85 @@ public class PixelGameGUI extends JFrame {
         }
     }
 
+    // In PixelGameGUI.java - update the loadGame method
     private void loadGame() {
         String filename = "gamesave.dat";
+
+        // Use the static method correctly
         PixelGameController loadedController = PixelGameController.loadGame(filename);
 
         if (loadedController != null) {
             this.gameController = loadedController;
+
+            // Initialize the game panel and setup input
             initializeGamePanel();
             setupGameInputHandling();
 
-            // Restore the maze panel reference
-            gameController.setMazePanel(mazePanel);
-
-            JOptionPane.showMessageDialog(this, "Game loaded successfully!", "Load Game", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, // Use 'this' for the parent component
+                    "Game loaded successfully!",
+                    "Load Game",
+                    JOptionPane.INFORMATION_MESSAGE);
         } else {
-            JOptionPane.showMessageDialog(this, "Failed to load game!", "Load Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, // Use 'this' for the parent component
+                    "Failed to load game!",
+                    "Load Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
+    // In PixelGameGUI.java - update the showExitImage method
+    private void showExitImage() {
+        try {
+            // Load your image
+            java.io.InputStream is = getClass().getResourceAsStream("/general/gamesaved.png");
+            if (is != null) {
+                ImageIcon exitIcon = new ImageIcon(is.readAllBytes());
 
-    // Main method to start the application
+                // Create a transparent dialog
+                JDialog dialog = new JDialog(this, false);
+                dialog.setUndecorated(true); // No title bar or borders
+                dialog.setBackground(new Color(0, 0, 0, 0)); // Transparent
+
+                // Create a label with just the image
+                JLabel imageLabel = new JLabel(exitIcon);
+                dialog.add(imageLabel);
+
+                // Make the image clickable to close
+                imageLabel.addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+                        dialog.dispose();
+                        dispose(); // Close the main window
+                    }
+                });
+
+                // Also close after 10 seconds automatically
+                Timer timer = new Timer(10000, e -> {
+                    dialog.dispose();
+                    dispose();
+                });
+                timer.setRepeats(false);
+                timer.start();
+
+                // Size to fit image and center
+                dialog.pack();
+                dialog.setLocationRelativeTo(null);
+
+                // Show the dialog
+                dialog.setVisible(true);
+
+            } else {
+                // Fallback: close after 2 seconds
+                Timer timer = new Timer(2000, e -> dispose());
+                timer.setRepeats(false);
+                timer.start();
+            }
+        } catch (Exception e) {
+            // Fallback: close after 2 seconds
+            Timer timer = new Timer(2000, event -> dispose());
+            timer.setRepeats(false);
+            timer.start();
+        }
+    }
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             new PixelGameGUI();

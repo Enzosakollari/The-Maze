@@ -49,21 +49,30 @@ public class ShopPanel extends JPanel {
         setupKeyListener();
         gameController.setPaused(true);
     }
+    // In ShopPanel.java - update the applyItemEffect method
+    // In ShopPanel.java - update the applyItemEffect method
     private void applyItemEffect(String item) {
         PixelPlayer player = gameController.getPlayer();
         switch (item) {
             case "SANGUINE VIGOR":
-
                 player.doubleSpeed();
                 System.out.println("Max health increased! Lives: " + player.getLives());
                 break;
             case "SCARLET BOLT":
-                player.setProjectileType("spell"); // CHANGE TO SPELL PROJECTILES
+                player.setProjectileType("spell");
                 System.out.println("Projectiles changed to spells! Damage: " + player.getProjectileDamage());
                 break;
             case "LABYRINTH MAP":
                 System.out.println("Labyrinth Map purchased!");
-                // You can implement map reveal logic here
+                player.setHasMap(true);
+                // Enable mini-map display - with null check
+                PixelMazePanel mazePanel = gameController.getMazePanel();
+                if (mazePanel != null) {
+                    mazePanel.setShowMiniMap(true);
+                    System.out.println("Mini-map enabled! Press M to toggle.");
+                } else {
+                    System.out.println("Maze panel not available, but map acquired. Mini-map will work when available.");
+                }
                 break;
         }
     }

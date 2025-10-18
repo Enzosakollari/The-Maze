@@ -37,6 +37,9 @@ public class PixelGameController implements Serializable {
         this.currentDifficulty = difficulty;
         this.currentCharacterIndex = characterIndex;
 
+        // Initialize player map with maze dimensions - ADD THIS
+        player.initializeMap(width, height);
+
         // DEBUG: Analyze maze tiles
         debugMazeTiles();
 
@@ -48,7 +51,6 @@ public class PixelGameController implements Serializable {
         comprehensiveEnemyDebug();
         debugLifePotions();
     }
-
     public PixelMazePanel getMazePanel() {
         return mazePanel;
     }
@@ -306,6 +308,20 @@ public class PixelGameController implements Serializable {
 
         player.update(keys, maze);
 
+        // MARK EXPLORED TILES FOR MINI-MAP - ADD THIS SECTION
+        if (player.hasMap()) {
+            int playerTileX = (int)(player.getX() / 64);
+            int playerTileY = (int)(player.getY() / 64);
+            player.markPositionExplored(playerTileX, playerTileY);
+
+            // Also mark adjacent tiles for better exploration visibility
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    player.markPositionExplored(playerTileX + dx, playerTileY + dy);
+                }
+            }
+        }
+
         // Update projectiles and check collisions with enemies
         updateProjectiles();
 
@@ -374,7 +390,6 @@ public class PixelGameController implements Serializable {
             System.out.println("Player died! Game over.");
         }
     }
-
     public void playerThrowDirectionalProjectile() {
         if (player != null && gameOngoing && player.isAlive()) {
             player.throwProjectileInFacingDirection();
@@ -518,29 +533,18 @@ public class PixelGameController implements Serializable {
         }
     }
 
+    // In PixelGameGUI.java - update the loadGame method
+// In PixelGameController.java - make sure loadGame is static
     public static PixelGameController loadGame(String filename) {
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filename))) {
             PixelGameController controller = (PixelGameController) ois.readObject();
             System.out.println("Game loaded successfully from: " + filename);
-
-            // Reinitialize transient fields
-            controller.soundManager = new SoundManager();
-            controller.random = new Random();
-
-            // Restart music if game was ongoing
-            if (controller.gameOngoing) {
-                controller.soundManager.startGameMusic();
-            }
-
             return controller;
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Exception e) {
             System.out.println("Error loading game: " + e.getMessage());
-            e.printStackTrace();
             return null;
         }
-    }
-
-    // Custom serialization to handle transient fields
+    }    // Custom serialization to handle transient fields
     private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
         ois.defaultReadObject();
         // Reinitialize transient fields after deserialization
