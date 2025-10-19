@@ -18,22 +18,21 @@ public class ShopPanel extends JPanel {
 
     private boolean shopOpen = true;
 
-    // Define clickable areas based on your image layout
     private Rectangle sanguineVigorArea = new Rectangle(300, 250, 150, 50);
     private Rectangle scarletBoltArea = new Rectangle(500, 250, 150, 50);
     private Rectangle labyrinthMapArea = new Rectangle(300, 350, 150, 50);
     private Rectangle closeArea = new Rectangle(350, 500, 100, 30);
 
     // Track selected item
-    private int selectedItem = 0; // 0: Sanguine Vigor, 1: Scarlet Bolt, 2: Labyrinth Map
+    private int selectedItem = 0;
     private final String[] itemNames = {"SANGUINE VIGOR", "SCARLET BOLT", "LABYRINTH MAP"};
     private final int[] itemPrices = {250, 180, 180};
 
     // Arrow positions for horizontal layout
     private final int[][] arrowPositions = {
-            {170, 370},  // Sanguine Vigor - moved down 50px
-            {370, 370},  // Scarlet Bolt - moved down 50px
-            {570, 370}   // Labyrinth Map - moved down 50px
+            {170, 370},
+            {370, 370},
+            {570, 370}
     };
 
     public ShopPanel(PixelGameController gameController) {
@@ -42,15 +41,14 @@ public class ShopPanel extends JPanel {
         setPreferredSize(new Dimension(800, 600));
         loadShopBackground();
         loadArrowIcon();
-        loadWarningIcon(); // ADD THIS
-        loadCongratsIcon(); // ADD THIS
+        loadWarningIcon();
+        loadCongratsIcon();
 
         setupMouseListener();
         setupKeyListener();
         gameController.setPaused(true);
     }
-    // In ShopPanel.java - update the applyItemEffect method
-    // In ShopPanel.java - update the applyItemEffect method
+
     private void applyItemEffect(String item) {
         PixelPlayer player = gameController.getPlayer();
         switch (item) {
@@ -65,7 +63,6 @@ public class ShopPanel extends JPanel {
             case "LABYRINTH MAP":
                 System.out.println("Labyrinth Map purchased!");
                 player.setHasMap(true);
-                // Enable mini-map display - with null check
                 PixelMazePanel mazePanel = gameController.getMazePanel();
                 if (mazePanel != null) {
                     mazePanel.setShowMiniMap(true);
@@ -81,7 +78,6 @@ public class ShopPanel extends JPanel {
             java.io.InputStream congratsStream = getClass().getResourceAsStream("/general/congrats.png");
             if (congratsStream != null) {
                 ImageIcon originalCongrats = new ImageIcon(congratsStream.readAllBytes());
-                // Scale the congrats icon (adjust size as needed)
                 Image scaledCongrats = originalCongrats.getImage().getScaledInstance(300, 200, Image.SCALE_SMOOTH);
                 congratsIcon = new ImageIcon(scaledCongrats);
                 System.out.println("Congrats icon loaded successfully");
@@ -99,11 +95,9 @@ public class ShopPanel extends JPanel {
         Graphics2D g2d = img.createGraphics();
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // Create a green celebration background
         g2d.setColor(new Color(0, 150, 0, 200));
         g2d.fillRoundRect(0, 0, 300, 200, 20, 20);
 
-        // Add celebration text
         g2d.setColor(Color.YELLOW);
         g2d.setFont(new Font("Arial", Font.BOLD, 24));
         g2d.drawString("PURCHASE", 80, 80);
@@ -123,7 +117,6 @@ public class ShopPanel extends JPanel {
             java.io.InputStream warningStream = getClass().getResourceAsStream("/general/warning.png");
             if (warningStream != null) {
                 ImageIcon originalWarning = new ImageIcon(warningStream.readAllBytes());
-                // Scale the warning icon
                 Image scaledWarning = originalWarning.getImage().getScaledInstance(350, 250, Image.SCALE_SMOOTH);
                 warningIcon = new ImageIcon(scaledWarning);
                 System.out.println("Warning icon loaded successfully");
@@ -141,13 +134,11 @@ public class ShopPanel extends JPanel {
         Graphics2D g2d = img.createGraphics();
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // Create a yellow triangle warning symbol
         g2d.setColor(Color.YELLOW);
         int[] xPoints = {40, 10, 70};
         int[] yPoints = {10, 70, 70};
         g2d.fillPolygon(xPoints, yPoints, 3);
 
-        // Add exclamation mark
         g2d.setColor(Color.BLACK);
         g2d.fillRect(38, 20, 4, 30);
         g2d.fillRect(38, 55, 4, 10);
@@ -173,11 +164,9 @@ public class ShopPanel extends JPanel {
 
     private void loadArrowIcon() {
         try {
-            // Load your new arrowUp.png image
             java.io.InputStream arrowStream = getClass().getResourceAsStream("/general/arrowUp.png");
             if (arrowStream != null) {
                 ImageIcon originalArrow = new ImageIcon(arrowStream.readAllBytes());
-                // Scale the arrow to appropriate size (pointing up for selection)
                 Image scaledArrow = originalArrow.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
                 arrowIcon = new ImageIcon(scaledArrow);
                 System.out.println("ArrowUp icon loaded successfully");
@@ -196,7 +185,6 @@ public class ShopPanel extends JPanel {
         Graphics2D g2d = img.createGraphics();
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setColor(Color.YELLOW);
-        // Create an upward-pointing arrow
         int[] xPoints = {25, 5, 45};
         int[] yPoints = {5, 45, 45};
         g2d.fillPolygon(xPoints, yPoints, 3);
@@ -211,7 +199,6 @@ public class ShopPanel extends JPanel {
                 int x = e.getX();
                 int y = e.getY();
 
-                // Check which item was clicked and update selection
                 if (sanguineVigorArea.contains(x, y)) {
                     selectedItem = 0;
                     buySelectedItem();
@@ -267,23 +254,20 @@ public class ShopPanel extends JPanel {
         if (player.getShards() >= cost) {
             player.deductShards(cost);
             applyItemEffect(item);
-            showCongratsImage(); // SHOW CONGRATS IMAGE INSTEAD OF TEXT
+            showCongratsImage();
         } else {
             showWarningImage();
         }
         repaint();
     }
     private void showCongratsImage() {
-        // Create a label with just the congrats icon
         JLabel congratsLabel = new JLabel(congratsIcon);
-        // Center the image on screen: (800-300)/2 = 250, (600-200)/2 = 200
         congratsLabel.setBounds(250, 200, 300, 200);
 
         add(congratsLabel);
         revalidate();
         repaint();
 
-        // Remove congrats after 2 seconds
         Timer timer = new Timer(2000, e -> {
             remove(congratsLabel);
             revalidate();
@@ -293,9 +277,7 @@ public class ShopPanel extends JPanel {
         timer.start();
     }
 
-    // ADD THIS METHOD - JUST SHOWS THE WARNING IMAGE
     private void showWarningImage() {
-        // Create a label with just the warning icon
         JLabel warningLabel = new JLabel(warningIcon);
         warningLabel.setBounds(225, 175, 350, 250);
 
@@ -303,7 +285,6 @@ public class ShopPanel extends JPanel {
         revalidate();
         repaint();
 
-        // Remove warning after 1.5 seconds
         Timer timer = new Timer(1500, e -> {
             remove(warningLabel);
             revalidate();
@@ -356,34 +337,28 @@ public class ShopPanel extends JPanel {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
 
-        // Draw shop background image
         if (shopBackground != null) {
             g2d.drawImage(shopBackground.getImage(), 0, 0, this);
         } else {
             drawFallbackShop(g2d);
         }
 
-        // Draw current shards
         g2d.setColor(Color.YELLOW);
         g2d.setFont(new Font("Arial", Font.BOLD, 20));
         g2d.drawString(""+ gameController.getPlayer().getShards(), 320, 155);
 
-        // Draw selection arrow
         drawSelectionArrow(g2d);
 
-        // Draw selection info
         drawSelectionInfo(g2d);
     }
 
     private void drawSelectionArrow(Graphics2D g2d) {
         if (arrowIcon != null) {
-            // Position arrow above the selected item
             int arrowX = arrowPositions[selectedItem][0];
             int arrowY = arrowPositions[selectedItem][1];
 
             g2d.drawImage(arrowIcon.getImage(), arrowX, arrowY, this);
         } else {
-            // Fallback: draw a yellow ^ symbol above selected item
             g2d.setColor(Color.YELLOW);
             g2d.setFont(new Font("Arial", Font.BOLD, 24));
             int arrowX = arrowPositions[selectedItem][0] + 20;
@@ -393,11 +368,9 @@ public class ShopPanel extends JPanel {
     }
 
     private void drawSelectionInfo(Graphics2D g2d) {
-        // Draw which item is currently selected at the bottom
         g2d.setColor(Color.WHITE);
         g2d.setFont(new Font("Arial", Font.BOLD, 16));
-//        g2d.drawString("Selected: " + itemNames[selectedItem] + " - " + itemPrices[selectedItem] + " shards",
-//                250, 520);
+
         g2d.drawString("Press ENTER to buy, A/D to navigate, ESC to close", 200, 540);
     }
 
@@ -410,7 +383,6 @@ public class ShopPanel extends JPanel {
         g2d.drawString("THE MAZE SHOP", 300, 100);
         g2d.drawString("YOUR SHARDS: " + gameController.getPlayer().getShards(), 300, 150);
 
-        // Draw items in horizontal layout with selection
         String[] items = {"SANGUINE VIGOR", "SCARLET BOLT", "LABYRINTH MAP"};
         int[] prices = {250, 180, 180};
 

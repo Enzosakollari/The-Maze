@@ -12,13 +12,13 @@ public class PixelMaze implements Serializable {
     private int exitX, exitY;
     private int startX, startY;
     private int width, height;
-    private transient Random random; // Make Random transient
+    private transient Random random;
     private static final int TILE_SIZE = 64;
-    private int lifePotionCount = 3; // Default number of life potions
-    private int difficulty; // Add difficulty field
+    private int lifePotionCount = 3;
+    private int difficulty;
 
     public PixelMaze(int width, int height) {
-        this(width, height, 1); // Default to medium difficulty
+        this(width, height, 1);
     }
 
     public PixelMaze(int width, int height, int difficulty) {
@@ -30,49 +30,42 @@ public class PixelMaze implements Serializable {
         this.treasurePositions = new ArrayList<>();
         this.lifePotionPositions = new ArrayList<>();
 
-        // Apply difficulty settings before generation
         applyDifficultySettings();
         generateMaze();
     }
 
     private void applyDifficultySettings() {
         switch (difficulty) {
-            case 0: // EASY
-                this.lifePotionCount = 5; // More life potions
+            case 0:
+                this.lifePotionCount = 5;
                 System.out.println("Easy maze settings: " + lifePotionCount + " life potions");
                 break;
             case 1: // MEDIUM
-                this.lifePotionCount = 3; // Standard life potions
+                this.lifePotionCount = 3;
                 System.out.println("Medium maze settings: " + lifePotionCount + " life potions");
                 break;
             case 2: // HARD
-                this.lifePotionCount = 2; // Fewer life potions
+                this.lifePotionCount = 2;
                 System.out.println("Hard maze settings: " + lifePotionCount + " life potions");
                 break;
         }
     }
 
     public void generateMaze() {
-        // Initialize everything as walls
         for (int i = 0; i < height; i++) {
             Arrays.fill(grid[i], '#');
         }
 
-        // Use recursive backtracking for perfect maze
         carvePassages(1, 1);
 
-        // Apply maze complexity based on difficulty
         applyMazeComplexity();
 
-        // Ensure start position is clear and track it
         startX = 1;
         startY = 1;
         grid[startY][startX] = 'S';
 
-        // Place exit at farthest point
         placeExit();
 
-        // Place treasures and life potions
         placeTreasures();
         placeLifePotions();
 
@@ -96,7 +89,6 @@ public class PixelMaze implements Serializable {
 
             if (nextX > 0 && nextX < width-1 && nextY > 0 && nextY < height-1 &&
                     grid[nextY][nextX] == '#') {
-                // Carve passage between cells
                 grid[y + dir[1]/2][x + dir[0]/2] = '.';
                 carvePassages(nextX, nextY);
             }
@@ -114,13 +106,12 @@ public class PixelMaze implements Serializable {
 
     private void applyMazeComplexity() {
         switch (difficulty) {
-            case 0: // EASY - simpler maze, fewer dead ends
+            case 0:
                 simplifyMaze();
                 break;
-            case 1: // MEDIUM - standard maze
-                // No changes, keep as generated
+            case 1:
                 break;
-            case 2: // HARD - more complex maze with more dead ends
+            case 2:
                 complexifyMaze();
                 break;
         }
@@ -128,12 +119,10 @@ public class PixelMaze implements Serializable {
 
     private void simplifyMaze() {
         System.out.println("Simplifying maze for easy difficulty...");
-        // Remove some walls to create more open paths
         int wallsRemoved = 0;
         for (int y = 1; y < height - 1; y++) {
             for (int x = 1; x < width - 1; x++) {
-                if (grid[y][x] == '#' && random.nextFloat() < 0.15f) { // 15% chance to remove wall
-                    // Check if removing this wall creates a valid path
+                if (grid[y][x] == '#' && random.nextFloat() < 0.15f) {
                     if (isIsolatedWall(x, y)) {
                         grid[y][x] = '.';
                         wallsRemoved++;
@@ -147,7 +136,6 @@ public class PixelMaze implements Serializable {
     private void complexifyMaze() {
         System.out.println("Making maze more complex for hard difficulty...");
 
-        // First, make a copy of the grid to test changes
         char[][] originalGrid = copyGrid();
 
         int wallsAdded = 0;
@@ -155,8 +143,7 @@ public class PixelMaze implements Serializable {
 
         for (int y = 1; y < height - 1; y++) {
             for (int x = 1; x < width - 1; x++) {
-                if (grid[y][x] == '.' && random.nextFloat() < 0.08f) { // Reduced from 0.1 to 0.08
-                    // Only add wall if it doesn't block critical path
+                if (grid[y][x] == '.' && random.nextFloat() < 0.08f) {
                     if (!wouldBlockCriticalPath(x, y)) {
                         grid[y][x] = '#';
                         addedWalls.add(new int[]{x, y});
@@ -166,7 +153,6 @@ public class PixelMaze implements Serializable {
             }
         }
 
-        // Verify that exit is still reachable
         if (!isExitReachable()) {
             System.out.println("Exit became unreachable after complexification, reverting some walls...");
             revertSomeWalls(addedWalls);
@@ -199,7 +185,6 @@ public class PixelMaze implements Serializable {
 
         visited[y][x] = true;
 
-        // Check all four directions
         return canReachExit(x + 1, y, visited) ||
                 canReachExit(x - 1, y, visited) ||
                 canReachExit(x, y + 1, visited) ||
@@ -207,7 +192,6 @@ public class PixelMaze implements Serializable {
     }
 
     private void revertSomeWalls(List<int[]> addedWalls) {
-        // Revert about half of the added walls to ensure path exists
         int wallsToRevert = addedWalls.size() / 2;
         Collections.shuffle(addedWalls, random);
 
@@ -218,7 +202,6 @@ public class PixelMaze implements Serializable {
         System.out.println("Reverted " + wallsToRevert + " walls to maintain exit path");
     }
     private boolean isIsolatedWall(int x, int y) {
-        // Count path neighbors - if surrounded by walls, it's isolated and safe to remove
         int pathNeighbors = 0;
         int[][] neighbors = {{-1,0}, {1,0}, {0,-1}, {0,1}};
 
@@ -229,17 +212,17 @@ public class PixelMaze implements Serializable {
                 pathNeighbors++;
             }
         }
-        return pathNeighbors <= 1; // Safe to remove if not many path connections
+        return pathNeighbors <= 1;
     }
 
     private boolean wouldBlockCriticalPath(int x, int y) {
         // Test if adding this wall would make exit unreachable
         char original = grid[y][x];
-        grid[y][x] = '#'; // Temporarily add the wall
+        grid[y][x] = '#';
 
         boolean exitReachable = isExitReachable();
 
-        grid[y][x] = original; // Restore original
+        grid[y][x] = original;
 
         return !exitReachable;
     }
@@ -262,7 +245,6 @@ public class PixelMaze implements Serializable {
 
 
     private void placeExit() {
-        // Find farthest reachable point from start using BFS
         boolean[][] visited = new boolean[height][width];
         int[][] distance = new int[height][width];
         Queue<int[]> queue = new LinkedList<>();
@@ -278,7 +260,6 @@ public class PixelMaze implements Serializable {
             int[] current = queue.poll();
             int x = current[0], y = current[1];
 
-            // Add all reachable positions as candidates
             candidatePositions.add(new int[]{x, y, distance[y][x]});
 
             if (distance[y][x] > maxDistance) {
@@ -299,7 +280,6 @@ public class PixelMaze implements Serializable {
             }
         }
 
-        // Filter to only good exit candidates that are actually reachable
         List<int[]> goodCandidates = new ArrayList<>();
         for (int[] candidate : candidatePositions) {
             int x = candidate[0], y = candidate[1], dist = candidate[2];
@@ -309,17 +289,14 @@ public class PixelMaze implements Serializable {
         }
 
         if (!goodCandidates.isEmpty()) {
-            // Sort by distance (farthest first)
             goodCandidates.sort((a, b) -> Integer.compare(b[2], a[2]));
 
-            // Take one of the top candidates
             int index = Math.min(2, goodCandidates.size() - 1);
             int[] bestExit = goodCandidates.get(index);
 
             exitX = bestExit[0];
             exitY = bestExit[1];
         } else {
-            // Fallback to any farthest reachable point
             for (int[] candidate : candidatePositions) {
                 if (candidate[2] == maxDistance) {
                     exitX = candidate[0];
@@ -335,29 +312,22 @@ public class PixelMaze implements Serializable {
     }
 
     private boolean isGoodExitCandidate(int x, int y, int distanceFromStart) {
-        // Must be a path tile
         if (grid[y][x] != '.') return false;
 
-        // Must be sufficiently far from start (at least 1/3 of maze size)
         int minDistance = Math.min(width, height) / 3;
         if (distanceFromStart < minDistance) return false;
 
-        // Should be in a corner or edge area for more challenge
         boolean isNearEdge = (x <= 2 || x >= width - 3 || y <= 2 || y >= height - 3);
 
-        // Should have limited neighbors (dead end or corridor end is good for exit)
         int pathNeighbors = countPathNeighbors(x, y);
         boolean isDeadEnd = pathNeighbors <= 1;
 
-        // Good candidates are near edges or in dead ends
         return isNearEdge || isDeadEnd;
     }
 
     private void findBetterExitPosition() {
-        // Try to find a better exit position manually
         List<int[]> edgePositions = new ArrayList<>();
 
-        // Look for path tiles near the edges
         for (int x = 1; x < width - 1; x++) {
             for (int y = 1; y < height - 1; y++) {
                 if (grid[y][x] == '.' && isGoodExitCandidate(x, y, calculateDistanceFromStart(x, y))) {
@@ -367,13 +337,10 @@ public class PixelMaze implements Serializable {
         }
 
         if (!edgePositions.isEmpty()) {
-            // Sort by distance from start (farthest first)
             edgePositions.sort((a, b) -> Integer.compare(b[2], a[2]));
 
-            // Remove old exit
             grid[exitY][exitX] = '.';
 
-            // Place new exit
             int[] bestPosition = edgePositions.get(0);
             exitX = bestPosition[0];
             exitY = bestPosition[1];
@@ -428,7 +395,6 @@ public class PixelMaze implements Serializable {
             int x = 1 + random.nextInt(width - 2);
             int y = 1 + random.nextInt(height - 2);
 
-            // Check if this is a valid position (path tile, not start/exit, not treasure, not already a potion)
             if (grid[y][x] == '.' &&
                     !isStartTile(x, y) &&
                     !isExitTile(x, y) &&
@@ -468,10 +434,7 @@ public class PixelMaze implements Serializable {
         return startDist < 4 || exitDist < 4;
     }
 
-    // PIXEL-BASED COLLISION DETECTION
     public boolean isWallAtPixel(float pixelX, float pixelY, int playerWidth, int playerHeight) {
-        // Convert pixel coordinates to grid cells the player overlaps with
-        // Add a small margin to prevent getting stuck on edges
         float margin = 2.0f;
         int leftCell = (int)((pixelX + margin) / TILE_SIZE);
         int rightCell = (int)((pixelX + playerWidth - margin) / TILE_SIZE);
@@ -486,7 +449,6 @@ public class PixelMaze implements Serializable {
                         return true;
                     }
                 } else {
-                    // Out of bounds counts as wall
                     return true;
                 }
             }
@@ -531,7 +493,6 @@ public class PixelMaze implements Serializable {
         if (centerCellX >= 0 && centerCellX < width && centerCellY >= 0 && centerCellY < height &&
                 grid[centerCellY][centerCellX] == 'T') {
             grid[centerCellY][centerCellX] = '.';
-            // Remove from treasure positions
             for (int i = 0; i < treasurePositions.size(); i++) {
                 int[] pos = treasurePositions.get(i);
                 if (pos[0] == centerCellX && pos[1] == centerCellY) {
@@ -549,7 +510,6 @@ public class PixelMaze implements Serializable {
         if (centerCellX >= 0 && centerCellX < width && centerCellY >= 0 && centerCellY < height &&
                 grid[centerCellY][centerCellX] == 'L') {
             grid[centerCellY][centerCellX] = '.';
-            // Remove from life potion positions
             for (int i = 0; i < lifePotionPositions.size(); i++) {
                 int[] pos = lifePotionPositions.get(i);
                 if (pos[0] == centerCellX && pos[1] == centerCellY) {
@@ -561,13 +521,12 @@ public class PixelMaze implements Serializable {
         }
     }
 
-    // Get start position in pixels (centered in the start cell for 48x64 player)
     public float getStartPixelX() {
-        return (startX + 0.5f) * TILE_SIZE - 24; // Center 48px wide player in 64px tile
+        return (startX + 0.5f) * TILE_SIZE - 24;
     }
 
     public float getStartPixelY() {
-        return (startY + 0.5f) * TILE_SIZE - 32; // Center 64px tall player in 64px tile
+        return (startY + 0.5f) * TILE_SIZE - 32;
     }
 
     // Debug method to print maze to console
@@ -579,10 +538,8 @@ public class PixelMaze implements Serializable {
             }
             System.out.println();
         }
-        System.out.println("===================");
     }
 
-    // Debug method to analyze tile distribution
     public void debugMazeTiles() {
         System.out.println("=== MAZE TILE ANALYSIS ===");
         int pathCount = 0;
@@ -624,11 +581,9 @@ public class PixelMaze implements Serializable {
     public List<int[]> getLifePotionPositions() { return lifePotionPositions; }
     public int getDifficulty() { return difficulty; }
 
-    // Custom serialization to handle transient fields
     private void readObject(java.io.ObjectInputStream ois)
             throws java.io.IOException, ClassNotFoundException {
         ois.defaultReadObject();
-        // Reinitialize transient fields after deserialization
         this.random = new Random();
         System.out.println("PixelMaze transient fields reinitialized after loading");
     }

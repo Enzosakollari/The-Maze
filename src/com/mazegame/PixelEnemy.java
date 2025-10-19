@@ -18,14 +18,12 @@ public class PixelEnemy implements Serializable {
 
     private int currentFrame = 0;
     private int animationCounter = 0;
-    private int animationSpeed = 8; // Higher = slower animation
+    private int animationSpeed = 8;
 
-    // Chasing behavior
     private float chaseRange = 300f;
     private boolean isChasing = false;
     private boolean moving = false;
 
-    // Health system
     private int maxHealth = 3;
     private int currentHealth;
     private boolean alive = true;
@@ -33,11 +31,11 @@ public class PixelEnemy implements Serializable {
     private static final long DAMAGE_FLASH_DURATION = 200; // milliseconds
 
     // Enemy type
-    private int enemyType; // 1, 2, or 3 for different enemy types
+    private int enemyType;
     private int damage = 1;
 
     public PixelEnemy(float startX, float startY) {
-        this(startX, startY, 1); // Default to enemy type 1
+        this(startX, startY, 1);
     }
 
     public PixelEnemy(float startX, float startY, int enemyType) {
@@ -46,7 +44,6 @@ public class PixelEnemy implements Serializable {
         this.enemyType = enemyType;
         this.currentHealth = maxHealth;
 
-        // Set enemy properties based on type
         applyEnemyTypeProperties();
 
         loadSpriteFrames();
@@ -55,19 +52,19 @@ public class PixelEnemy implements Serializable {
 
     private void applyEnemyTypeProperties() {
         switch (enemyType) {
-            case 1: // Basic enemy
+            case 1:
                 this.speed = 2.0f;
                 this.maxHealth = 3;
                 this.damage = 1;
                 this.chaseRange = 250f;
                 break;
-            case 2: // Fast enemy
+            case 2:
                 this.speed = 3.0f;
                 this.maxHealth = 2;
                 this.damage = 1;
                 this.chaseRange = 350f;
                 break;
-            case 3: // Strong enemy
+            case 3:
                 this.speed = 1.5f;
                 this.maxHealth = 5;
                 this.damage = 2;
@@ -83,27 +80,22 @@ public class PixelEnemy implements Serializable {
 
             String enemyFolder = "/enemy/enemy" + enemyType + "/";
 
-            // Load UP direction frames
             spriteFrames[0][0] = loadAndScaleSprite(enemyFolder + "up_1.png", width, height);
             spriteFrames[0][1] = loadAndScaleSprite(enemyFolder + "up_2.png", width, height);
             spriteFrames[0][2] = loadAndScaleSprite(enemyFolder + "up_3.png", width, height);
 
-            // Load DOWN direction frames
             spriteFrames[1][0] = loadAndScaleSprite(enemyFolder + "down_1.png", width, height);
             spriteFrames[1][1] = loadAndScaleSprite(enemyFolder + "down_2.png", width, height);
             spriteFrames[1][2] = loadAndScaleSprite(enemyFolder + "down_3.png", width, height);
 
-            // Load LEFT direction frames
             spriteFrames[2][0] = loadAndScaleSprite(enemyFolder + "left_1.png", width, height);
             spriteFrames[2][1] = loadAndScaleSprite(enemyFolder + "left_2.png", width, height);
             spriteFrames[2][2] = loadAndScaleSprite(enemyFolder + "left_3.png", width, height);
 
-            // Load RIGHT direction frames
             spriteFrames[3][0] = loadAndScaleSprite(enemyFolder + "right_1.png", width, height);
             spriteFrames[3][1] = loadAndScaleSprite(enemyFolder + "right_2.png", width, height);
             spriteFrames[3][2] = loadAndScaleSprite(enemyFolder + "right_3.png", width, height);
 
-            // Check if all sprites loaded
             boolean allLoaded = true;
             for (int dir = 0; dir < 4; dir++) {
                 for (int frame = 0; frame < 3; frame++) {
@@ -150,19 +142,19 @@ public class PixelEnemy implements Serializable {
         // Different colors for different enemy types
         Color[][] frameColors = {
                 { // Type 1 - Red
-                        new Color(200, 0, 0),    // Dark red
-                        new Color(150, 0, 0),    // Darker red
-                        new Color(255, 0, 0)     // Bright red
+                        new Color(200, 0, 0),
+                        new Color(150, 0, 0),
+                        new Color(255, 0, 0)
                 },
                 { // Type 2 - Blue
-                        new Color(0, 0, 200),    // Dark blue
-                        new Color(0, 0, 150),    // Darker blue
-                        new Color(0, 0, 255)     // Bright blue
+                        new Color(0, 0, 200),
+                        new Color(0, 0, 150),
+                        new Color(0, 0, 255)
                 },
                 { // Type 3 - Green
-                        new Color(0, 150, 0),    // Dark green
-                        new Color(0, 100, 0),    // Darker green
-                        new Color(0, 255, 0)     // Bright green
+                        new Color(0, 150, 0),
+                        new Color(0, 100, 0),
+                        new Color(0, 255, 0)
                 }
         };
 
@@ -173,7 +165,6 @@ public class PixelEnemy implements Serializable {
                 BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
                 Graphics2D g2d = img.createGraphics();
 
-                // Use different color based on enemy type
                 Color[] colors = frameColors[enemyType - 1];
                 g2d.setColor(colors[frame]);
                 g2d.fillRect(0, 0, width, height);
@@ -184,7 +175,6 @@ public class PixelEnemy implements Serializable {
                 g2d.drawString(directionLabels[dir], 5, 30);
                 g2d.drawString("F" + (frame + 1), 5, 45);
 
-                // Add type-specific indicator
                 switch (enemyType) {
                     case 1:
                         g2d.drawString("BASIC", 5, 55);
@@ -203,14 +193,13 @@ public class PixelEnemy implements Serializable {
         }
     }
 
-    // Add these setter methods for difficulty adjustment
     public void setSpeed(float speed) {
         this.speed = speed;
     }
 
     public void setMaxHealth(int maxHealth) {
         this.maxHealth = maxHealth;
-        this.currentHealth = maxHealth; // Heal to full when max health changes
+        this.currentHealth = maxHealth;
     }
 
     public void setDamage(int damage) {
@@ -224,7 +213,6 @@ public class PixelEnemy implements Serializable {
     public void update(PixelPlayer player, PixelMaze maze) {
         if (!alive) return;
 
-        // Calculate distance to player
         float playerCenterX = player.getX() + player.getWidth() / 2;
         float playerCenterY = player.getY() + player.getHeight() / 2;
         float enemyCenterX = x + width / 2;
@@ -235,9 +223,8 @@ public class PixelEnemy implements Serializable {
                         Math.pow(playerCenterY - enemyCenterY, 2)
         );
 
-        // Chase player if within range
         isChasing = (distance <= chaseRange);
-        moving = isChasing; // Enemy is moving when chasing
+        moving = isChasing;
 
         if (isChasing) {
             chasePlayer(player, maze);
@@ -245,7 +232,6 @@ public class PixelEnemy implements Serializable {
             wander(maze);
         }
 
-        // Update animation
         updateAnimation();
     }
 
@@ -255,11 +241,9 @@ public class PixelEnemy implements Serializable {
         float enemyCenterX = x + width / 2;
         float enemyCenterY = y + height / 2;
 
-        // Move towards player
         float dx = playerCenterX - enemyCenterX;
         float dy = playerCenterY - enemyCenterY;
 
-        // Normalize direction
         float length = (float) Math.sqrt(dx * dx + dy * dy);
         if (length > 0) {
             dx /= length;
@@ -269,10 +253,8 @@ public class PixelEnemy implements Serializable {
         float newX = x + dx * speed;
         float newY = y + dy * speed;
 
-        // Update facing direction
         updateFacingDirection(dx, dy);
 
-        // Only move if no collision
         if (!maze.isWallAtPixel(newX, newY, width, height)) {
             x = newX;
             y = newY;
@@ -280,8 +262,7 @@ public class PixelEnemy implements Serializable {
     }
 
     private void wander(PixelMaze maze) {
-        // Simple wandering - move in random directions occasionally
-        if (Math.random() < 0.02) { // 2% chance to change direction each frame
+        if (Math.random() < 0.02) {
             changeWanderDirection();
         }
 
@@ -294,22 +275,20 @@ public class PixelEnemy implements Serializable {
             case RIGHT: dx = 1; break;
         }
 
-        float newX = x + dx * (speed * 0.3f); // Much slower when wandering
+        float newX = x + dx * (speed * 0.3f);
         float newY = y + dy * (speed * 0.3f);
 
-        // If hit a wall, change direction
         if (maze.isWallAtPixel(newX, newY, width, height)) {
             changeWanderDirection();
-            moving = false; // Stop moving when hitting wall
+            moving = false;
         } else {
             x = newX;
             y = newY;
-            moving = true; // Moving when wandering
+            moving = true;
         }
     }
 
     private void changeWanderDirection() {
-        // Randomly change direction when hitting a wall or randomly
         Direction[] directions = Direction.values();
         facing = directions[(int)(Math.random() * directions.length)];
     }
@@ -326,11 +305,11 @@ public class PixelEnemy implements Serializable {
         if (moving) {
             animationCounter++;
             if (animationCounter >= animationSpeed) {
-                currentFrame = (currentFrame + 1) % 3; // Cycle through 3 frames (0,1,2)
+                currentFrame = (currentFrame + 1) % 3;
                 animationCounter = 0;
             }
         } else {
-            currentFrame = 0; // Reset to first frame when not moving
+            currentFrame = 0;
         }
     }
 
@@ -353,7 +332,6 @@ public class PixelEnemy implements Serializable {
                 y + height > projectile.getY();
     }
 
-    // Health system methods
     public void takeDamage(int damage) {
         if (!alive) return;
 
@@ -382,7 +360,6 @@ public class PixelEnemy implements Serializable {
     }
 
     public boolean isFlashing() {
-        // Flash for a short time after taking damage
         return System.currentTimeMillis() - lastDamageTime < DAMAGE_FLASH_DURATION;
     }
 
@@ -398,12 +375,9 @@ public class PixelEnemy implements Serializable {
         return speed;
     }
 
-    // Custom serialization to reload sprites after loading
     private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
         ois.defaultReadObject();
-        // Reinitialize transient fields after deserialization
         spriteFrames = new ImageIcon[4][3];
-        // Reload sprites
         loadSpriteFrames();
         System.out.println("Enemy type " + enemyType + " sprites reloaded after deserialization");
     }

@@ -12,7 +12,6 @@ import java.io.*;
 public class PixelGameController implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    // Make transient fields that shouldn't be serialized
     private transient PixelMazePanel mazePanel;
     private transient SoundManager soundManager;
 
@@ -23,7 +22,6 @@ public class PixelGameController implements Serializable {
     private List<PixelEnemy> enemies;
     private boolean paused = false;
 
-    // Add difficulty tracking for reloading
     private int currentDifficulty;
     private int currentCharacterIndex;
 
@@ -37,15 +35,12 @@ public class PixelGameController implements Serializable {
         this.currentDifficulty = difficulty;
         this.currentCharacterIndex = characterIndex;
 
-        // Initialize player map with maze dimensions - ADD THIS
         player.initializeMap(width, height);
 
-        // DEBUG: Analyze maze tiles
         debugMazeTiles();
 
-        spawnEnemies(difficulty); // Spawn enemies FIRST
+        spawnEnemies(difficulty);
 
-        // NOW apply difficulty settings after enemies exist
         applyDifficultySettings(difficulty);
 
         comprehensiveEnemyDebug();
@@ -60,7 +55,7 @@ public class PixelGameController implements Serializable {
     }
 
     public PixelGameController(int width, int height) {
-        this(width, height, 0, 1); // Now calls the 4-parameter constructor
+        this(width, height, 0, 1);
     }
 
     private void spawnEnemies(int difficulty) {
@@ -69,13 +64,13 @@ public class PixelGameController implements Serializable {
         int enemyCount;
         switch (difficulty) {
             case 0: // EASY
-                enemyCount = 15;  // Lots of enemies even on easy
+                enemyCount = 15;
                 break;
             case 1: // MEDIUM
-                enemyCount = 25;  // Even more enemies
+                enemyCount = 25;
                 break;
             case 2: // HARD
-                enemyCount = 40;  // Flood the map with enemies!
+                enemyCount = 40;
                 break;
             default:
                 enemyCount = 15;
@@ -83,42 +78,36 @@ public class PixelGameController implements Serializable {
 
         int enemiesSpawned = 0;
         int attempts = 0;
-        int maxAttempts = enemyCount * 20; // More attempts for dense spawning
+        int maxAttempts = enemyCount * 20;
 
         while (enemiesSpawned < enemyCount && attempts < maxAttempts) {
-            // SPAWN ANYWHERE ON THE MAP, not just around player
             float enemyX, enemyY;
 
             if (attempts % 3 == 0) {
-                // Method 1: Random position anywhere in maze bounds
-                int mazePixelWidth = maze.getWidth() * 64; // TILE_SIZE is 64
+                int mazePixelWidth = maze.getWidth() * 64;
                 int mazePixelHeight = maze.getHeight() * 64;
-                enemyX = random.nextInt(mazePixelWidth - 48); // Subtract enemy width
-                enemyY = random.nextInt(mazePixelHeight - 64); // Subtract enemy height
+                enemyX = random.nextInt(mazePixelWidth - 48);
+                enemyY = random.nextInt(mazePixelHeight - 64);
             } else {
-                // Method 2: Use maze grid for more precise placement
                 int gridX = random.nextInt(maze.getWidth());
                 int gridY = random.nextInt(maze.getHeight());
-                enemyX = gridX * 64f; // Convert to pixel coordinates
+                enemyX = gridX * 64f;
                 enemyY = gridY * 64f;
             }
 
-            // Check if this is a valid spawn position (not in wall)
             if (isValidEnemySpawnPosition(enemyX, enemyY)) {
-                // Random enemy type based on difficulty
                 int enemyType;
                 if (difficulty == 0) {
-                    enemyType = random.nextInt(2) + 1; // Type 1 or 2 on easy
+                    enemyType = random.nextInt(2) + 1;
                 } else if (difficulty == 1) {
-                    enemyType = random.nextInt(3) + 1; // All types on medium
+                    enemyType = random.nextInt(3) + 1;
                 } else {
-                    // On hard, more strong enemies
                     int rand = random.nextInt(10);
                     if (rand < 3) { // 30% basic
                         enemyType = 1;
-                    } else if (rand < 6) { // 30% fast
+                    } else if (rand < 6) {
                         enemyType = 2;
-                    } else { // 40% strong
+                    } else {
                         enemyType = 3;
                     }
                 }
@@ -137,17 +126,15 @@ public class PixelGameController implements Serializable {
     }
 
     private boolean isValidEnemySpawnPosition(float x, float y) {
-        // ONLY check if not in wall - remove all distance restrictions
         if (maze.isWallAtPixel(x, y, 48, 64)) {
             return false;
         }
 
-        // Optional: Check if not too close to other enemies (for spacing)
         for (PixelEnemy existingEnemy : enemies) {
             float distanceToEnemy = (float) Math.sqrt(
                     Math.pow(x - existingEnemy.getX(), 2) + Math.pow(y - existingEnemy.getY(), 2)
             );
-            if (distanceToEnemy < 50) { // Reduced from 100 to allow denser packing
+            if (distanceToEnemy < 50) {
                 return false;
             }
         }
@@ -155,9 +142,8 @@ public class PixelGameController implements Serializable {
         return true;
     }
 
-    // Update the old spawnEnemies method to use the new one
     private void spawnEnemies() {
-        spawnEnemies(1); // Default to medium difficulty
+        spawnEnemies(1);
     }
 
     public void debugMazeTiles() {
@@ -166,7 +152,7 @@ public class PixelGameController implements Serializable {
         int pathCount = 0;
         int wallCount = 0;
         int treasureCount = 0;
-        int lifePotionCount = 0; // ADD THIS
+        int lifePotionCount = 0;
         int startCount = 0;
         int exitCount = 0;
 
@@ -177,7 +163,7 @@ public class PixelGameController implements Serializable {
                     case '.': pathCount++; break;
                     case '#': wallCount++; break;
                     case 'T': treasureCount++; break;
-                    case 'L': lifePotionCount++; break; // ADD THIS
+                    case 'L': lifePotionCount++; break;
                     case 'S': startCount++; break;
                     case 'E': exitCount++; break;
                 }
@@ -187,14 +173,13 @@ public class PixelGameController implements Serializable {
         System.out.println("Path tiles (.): " + pathCount);
         System.out.println("Wall tiles (#): " + wallCount);
         System.out.println("Treasure tiles (T): " + treasureCount);
-        System.out.println("Life Potion tiles (L): " + lifePotionCount); // ADD THIS
+        System.out.println("Life Potion tiles (L): " + lifePotionCount);
         System.out.println("Start tiles (S): " + startCount);
         System.out.println("Exit tiles (E): " + exitCount);
         System.out.println("Total tiles: " + (pathCount + wallCount + treasureCount + lifePotionCount + startCount + exitCount));
         System.out.println("=== END TILE ANALYSIS ===");
     }
 
-    // ADD THIS METHOD to debug life potions
     private void debugLifePotions() {
         System.out.println("=== LIFE POTION DEBUG ===");
         List<int[]> lifePotions = maze.getLifePotionPositions();
@@ -206,7 +191,6 @@ public class PixelGameController implements Serializable {
     }
 
     public void startGame() {
-        // Use the maze's calculated start position
         float startX = maze.getStartPixelX();
         float startY = maze.getStartPixelY();
 
@@ -223,7 +207,6 @@ public class PixelGameController implements Serializable {
         System.out.println("Press ESC for pause menu");
         System.out.println("Click to throw daggers at enemies!");
 
-        // DEBUG: Check enemies
         debugEnemies();
     }
 
@@ -241,16 +224,13 @@ public class PixelGameController implements Serializable {
     public void comprehensiveEnemyDebug() {
         System.out.println("=== COMPREHENSIVE ENEMY DEBUG ===");
 
-        // 1. Check basic game state
         System.out.println("Game ongoing: " + gameOngoing);
         System.out.println("Player: " + (player != null ? "exists" : "null"));
         System.out.println("Maze: " + (maze != null ? "exists" : "null"));
 
-        // 2. Check enemies list
         System.out.println("Enemies list: " + enemies);
         System.out.println("Enemies list size: " + enemies.size());
 
-        // 3. Check each enemy individually
         if (enemies != null && !enemies.isEmpty()) {
             for (int i = 0; i < enemies.size(); i++) {
                 PixelEnemy enemy = enemies.get(i);
@@ -261,7 +241,6 @@ public class PixelGameController implements Serializable {
                     System.out.println("  Health: " + enemy.getCurrentHealth() + "/" + enemy.getMaxHealth());
                     System.out.println("  Alive: " + enemy.isAlive());
 
-                    // Test sprite loading
                     try {
                         ImageIcon sprite = enemy.getCurrentSprite();
                         System.out.println("  Sprite: " + (sprite != null ? "loaded" : "null"));
@@ -290,13 +269,13 @@ public class PixelGameController implements Serializable {
                 for (int x = 0; x < maze.getWidth(); x++) {
                     if (grid[y][x] == '.') pathTiles++;
                     if (grid[y][x] == 'T') treasureTiles++;
-                    if (grid[y][x] == 'L') lifePotionTiles++; // ADD THIS
+                    if (grid[y][x] == 'L') lifePotionTiles++;
                 }
             }
 
             System.out.println("Maze path tiles: " + pathTiles);
             System.out.println("Maze treasure tiles: " + treasureTiles);
-            System.out.println("Maze life potion tiles: " + lifePotionTiles); // ADD THIS
+            System.out.println("Maze life potion tiles: " + lifePotionTiles);
             System.out.println("Total possible spawn tiles: " + (pathTiles + treasureTiles + lifePotionTiles));
         }
 
@@ -304,17 +283,15 @@ public class PixelGameController implements Serializable {
     }
 
     public void updatePlayer(boolean[] keys) {
-        if (!gameOngoing || !player.isAlive() || paused) return; // Added paused check
+        if (!gameOngoing || !player.isAlive() || paused) return;
 
         player.update(keys, maze);
 
-        // MARK EXPLORED TILES FOR MINI-MAP - ADD THIS SECTION
         if (player.hasMap()) {
             int playerTileX = (int)(player.getX() / 64);
             int playerTileY = (int)(player.getY() / 64);
             player.markPositionExplored(playerTileX, playerTileY);
 
-            // Also mark adjacent tiles for better exploration visibility
             for (int dy = -1; dy <= 1; dy++) {
                 for (int dx = -1; dx <= 1; dx++) {
                     player.markPositionExplored(playerTileX + dx, playerTileY + dy);
@@ -322,26 +299,21 @@ public class PixelGameController implements Serializable {
             }
         }
 
-        // Update projectiles and check collisions with enemies
         updateProjectiles();
 
-        // Update enemies and check collisions with player
         for (PixelEnemy enemy : enemies) {
             if (!enemy.isAlive()) continue;
 
             enemy.update(player, maze);
 
-            // Check collision with player
             if (enemy.collidesWith(player) && !player.isInvulnerable()) {
                 player.takeDamage();
-                // soundManager.playSoundEffect("player_hurt"); // Uncomment when you have sound
 
-                // Knockback effect
                 float knockbackX = player.getX() - enemy.getX();
                 float knockbackY = player.getY() - enemy.getY();
                 float length = (float) Math.sqrt(knockbackX * knockbackX + knockbackY * knockbackY);
                 if (length > 0) {
-                    knockbackX = (knockbackX / length) * 50; // 50 pixel knockback
+                    knockbackX = (knockbackX / length) * 50;
                     knockbackY = (knockbackY / length) * 50;
 
                     float newX = player.getX() + knockbackX;
@@ -354,25 +326,19 @@ public class PixelGameController implements Serializable {
             }
         }
 
-        // Remove dead enemies
         enemies.removeIf(enemy -> !enemy.isAlive());
 
-        // Check for treasure collection
         if (maze.isTreasureAtPixel(player.getX(), player.getY(), player.getWidth(), player.getHeight())) {
             maze.collectTreasureAt(player.getX(), player.getY(), player.getWidth(), player.getHeight());
             player.collectTreasure();
-            // soundManager.playSoundEffect("treasure"); // Uncomment when you have sound
         }
 
-        // CHECK FOR LIFE POTION COLLECTION - ADD THIS SECTION
         if (maze.isLifePotionAtPixel(player.getX(), player.getY(), player.getWidth(), player.getHeight())) {
             maze.collectLifePotionAt(player.getX(), player.getY(), player.getWidth(), player.getHeight());
             player.collectLifePotion();
             System.out.println("Life potion collected! Lives: " + player.getLives());
-            // soundManager.playSoundEffect("life_potion"); // Uncomment when you have sound
         }
 
-        // Check for exit
         if (maze.isExitAtPixel(player.getX(), player.getY(), player.getWidth(), player.getHeight())) {
             gameOngoing = false;
             if (soundManager != null) {
@@ -381,7 +347,6 @@ public class PixelGameController implements Serializable {
             System.out.println("Exit reached! Game over.");
         }
 
-        // Check if player died
         if (!player.isAlive()) {
             gameOngoing = false;
             if (soundManager != null) {
@@ -397,31 +362,26 @@ public class PixelGameController implements Serializable {
     }
 
     private void updateProjectiles() {
-        // Get player's projectiles
         List<Projectile> projectiles = player.getProjectiles();
         Iterator<Projectile> projectileIterator = projectiles.iterator();
 
         while (projectileIterator.hasNext()) {
             Projectile projectile = projectileIterator.next();
 
-            // Check collision with each enemy
             for (PixelEnemy enemy : enemies) {
                 if (enemy.isAlive() && projectile.collidesWith(enemy)) {
                     enemy.takeDamage(projectile.getDamage());
                     projectileIterator.remove();
                     System.out.println("Enemy hit! Health: " + enemy.getCurrentHealth() + "/" + enemy.getMaxHealth());
-                    // soundManager.playSoundEffect("enemy_hit"); // Uncomment when you have sound
                     break;
                 }
             }
         }
     }
 
-    // Method to handle player throwing projectiles (called from mouse click)
     public void playerThrowProjectile(int targetX, int targetY) {
         if (player != null && gameOngoing && player.isAlive()) {
             player.throwProjectile(targetX, targetY);
-            // soundManager.playSoundEffect("throw_dagger"); // Uncomment when you have sound
         }
     }
 
@@ -450,18 +410,16 @@ public class PixelGameController implements Serializable {
                 System.out.println("  Health: " + enemy.getCurrentHealth() + "/" + enemy.getMaxHealth());
                 System.out.println("  Alive: " + enemy.isAlive());
 
-                // Check if enemy is on a wall (shouldn't happen but let's verify)
                 boolean onWall = maze.isWallAtPixel(enemy.getX(), enemy.getY(), enemy.getWidth(), enemy.getHeight());
                 System.out.println("  On wall: " + onWall);
 
-                // Check distance to player
                 if (player != null) {
                     float distance = (float) Math.sqrt(
                             Math.pow(player.getX() - enemy.getX(), 2) +
                                     Math.pow(player.getY() - enemy.getY(), 2)
                     );
                     System.out.println("  Distance to player: " + distance);
-                    System.out.println("  Within chase range: " + (distance <= 300)); // Updated to 300
+                    System.out.println("  Within chase range: " + (distance <= 300));
                 }
             }
         }
@@ -474,20 +432,17 @@ public class PixelGameController implements Serializable {
         System.out.println("Enemies to modify: " + enemies.size());
 
         switch (difficulty) {
-            case 0: // EASY
+            case 0:
                 System.out.println("Easy difficulty applied");
-                // Make enemies weaker on easy
                 for (PixelEnemy enemy : enemies) {
-                    enemy.setSpeed(enemy.getSpeed() * 0.8f); // 20% slower
+                    enemy.setSpeed(enemy.getSpeed() * 0.8f);
                 }
                 break;
             case 1: // MEDIUM
                 System.out.println("Medium difficulty applied");
-                // Enemies at normal speed
                 break;
             case 2: // HARD
                 System.out.println("Hard difficulty applied");
-                // Make enemies more aggressive on hard
                 for (PixelEnemy enemy : enemies) {
                     enemy.setSpeed(enemy.getSpeed() * 1.2f); // 20% faster
                 }
@@ -533,8 +488,6 @@ public class PixelGameController implements Serializable {
         }
     }
 
-    // In PixelGameGUI.java - update the loadGame method
-// In PixelGameController.java - make sure loadGame is static
     public static PixelGameController loadGame(String filename) {
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filename))) {
             PixelGameController controller = (PixelGameController) ois.readObject();
@@ -544,10 +497,9 @@ public class PixelGameController implements Serializable {
             System.out.println("Error loading game: " + e.getMessage());
             return null;
         }
-    }    // Custom serialization to handle transient fields
+    }
     private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
         ois.defaultReadObject();
-        // Reinitialize transient fields after deserialization
         this.soundManager = new SoundManager();
         this.random = new Random();
         System.out.println("Transient fields reinitialized after loading");

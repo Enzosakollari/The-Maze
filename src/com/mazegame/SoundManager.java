@@ -21,7 +21,7 @@ public class SoundManager {
                 backgroundMusic.open(audioInput);
 
                 // Set volume
-                setClipVolume(volume); // Renamed to avoid conflict
+                setClipVolume(volume);
 
                 System.out.println("Background music loaded successfully!");
             } else {
@@ -33,7 +33,7 @@ public class SoundManager {
         }
     }
 
-    private void setClipVolume(float volume) { // Renamed method
+    private void setClipVolume(float volume) {
         if (backgroundMusic != null) {
             try {
                 FloatControl gainControl = (FloatControl) backgroundMusic.getControl(FloatControl.Type.MASTER_GAIN);
@@ -47,8 +47,8 @@ public class SoundManager {
 
     public void startGameMusic() {
         if (backgroundMusic != null && !isPlaying) {
-            backgroundMusic.setFramePosition(0); // Start from beginning
-            backgroundMusic.loop(Clip.LOOP_CONTINUOUSLY); // Loop forever
+            backgroundMusic.setFramePosition(0);
+            backgroundMusic.loop(Clip.LOOP_CONTINUOUSLY);
             backgroundMusic.start();
             isPlaying = true;
             System.out.println("Game music started (looping)");
@@ -65,8 +65,7 @@ public class SoundManager {
 
     public void setVolume(float volume) {
         this.volume = Math.max(0.0f, Math.min(1.0f, volume));
-        setClipVolume(this.volume); // Use renamed method
-    }
+        setClipVolume(this.volume); }
 
     public boolean isMusicLoaded() {
         return backgroundMusic != null;

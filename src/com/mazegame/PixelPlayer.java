@@ -22,14 +22,13 @@ public class PixelPlayer implements Serializable {
     private float originalSpeed = 4.0f;
     private Direction facing = Direction.DOWN;
 
-    // Player stats
     private int treasuresCollected = 0;
     private int points = 0;
     private int lives = 3;
     private boolean alive = true;
     private boolean invulnerable = false;
     private long invulnerabilityEndTime = 0;
-    private static final long INVULNERABILITY_DURATION = 2000; // 2 seconds
+    private static final long INVULNERABILITY_DURATION = 2000;
 
     // Make spriteFrames transient since ImageIcon isn't serializable
     private transient ImageIcon[][] spriteFrames = new ImageIcon[4][3];
@@ -45,7 +44,7 @@ public class PixelPlayer implements Serializable {
     // Character type
     private int characterType;
 
-    private String projectileType = "blade"; // Default: "blade", can be "spell"
+    private String projectileType = "blade";
     private int projectileDamage = 1;
 
     public PixelPlayer(int characterType) {
@@ -62,27 +61,22 @@ public class PixelPlayer implements Serializable {
 
             String characterFolder = "/player" + (characterType + 1) + "/";
 
-            // Load UP direction frames
             spriteFrames[0][0] = loadAndScaleSprite(characterFolder + "up_1.png", width, height);
             spriteFrames[0][1] = loadAndScaleSprite(characterFolder + "up_2.png", width, height);
             spriteFrames[0][2] = loadAndScaleSprite(characterFolder + "up_3.png", width, height);
 
-            // Load DOWN direction frames
             spriteFrames[1][0] = loadAndScaleSprite(characterFolder + "down_1.png", width, height);
             spriteFrames[1][1] = loadAndScaleSprite(characterFolder + "down_2.png", width, height);
             spriteFrames[1][2] = loadAndScaleSprite(characterFolder + "down_3.png", width, height);
 
-            // Load LEFT direction frames
             spriteFrames[2][0] = loadAndScaleSprite(characterFolder + "left_1.png", width, height);
             spriteFrames[2][1] = loadAndScaleSprite(characterFolder + "left_2.png", width, height);
             spriteFrames[2][2] = loadAndScaleSprite(characterFolder + "left_3.png", width, height);
 
-            // Load RIGHT direction frames
             spriteFrames[3][0] = loadAndScaleSprite(characterFolder + "right_1.png", width, height);
             spriteFrames[3][1] = loadAndScaleSprite(characterFolder + "right_2.png", width, height);
             spriteFrames[3][2] = loadAndScaleSprite(characterFolder + "right_3.png", width, height);
 
-            // Check if all sprites loaded
             boolean allLoaded = true;
             for (int dir = 0; dir < 4; dir++) {
                 for (int frame = 0; frame < 3; frame++) {
@@ -154,16 +148,12 @@ public class PixelPlayer implements Serializable {
     public void update(boolean[] keys, PixelMaze maze) {
         if (!alive) return;
 
-        // Update invulnerability
         updateInvulnerability();
 
-        // Handle movement
         handleMovement(keys, maze);
 
-        // Update projectiles
         updateProjectiles(maze);
 
-        // Update animation
         updateAnimation();
     }
 
@@ -172,38 +162,32 @@ public class PixelPlayer implements Serializable {
         float newY = y;
         boolean moving = false;
 
-        // UP (W or Up Arrow)
         if (keys[0]) {
             newY -= speed;
             facing = Direction.UP;
             moving = true;
         }
-        // DOWN (S or Down Arrow)
         if (keys[1]) {
             newY += speed;
             facing = Direction.DOWN;
             moving = true;
         }
-        // LEFT (A or Left Arrow)
         if (keys[2]) {
             newX -= speed;
             facing = Direction.LEFT;
             moving = true;
         }
-        // RIGHT (D or Right Arrow)
         if (keys[3]) {
             newX += speed;
             facing = Direction.RIGHT;
             moving = true;
         }
 
-        // Only update position if no collision
         if (!maze.isWallAtPixel(newX, newY, width, height)) {
             x = newX;
             y = newY;
         }
 
-        // Update animation state
         if (moving) {
             animationCounter++;
             if (animationCounter >= animationSpeed) {
@@ -211,12 +195,11 @@ public class PixelPlayer implements Serializable {
                 animationCounter = 0;
             }
         } else {
-            currentFrame = 0; // Reset to first frame when not moving
+            currentFrame = 0;
         }
     }
 
     private void updateAnimation() {
-        // Animation is handled in handleMovement now
     }
 
     private void updateInvulnerability() {
@@ -231,7 +214,6 @@ public class PixelPlayer implements Serializable {
             Projectile projectile = iterator.next();
             projectile.update();
 
-            // Use smaller collision area for spells to prevent instant wall hits
             boolean hitWall;
             if ("spell".equals(projectile.getType())) {
                 // For spells, use centered 32x32 collision area instead of full 64x64
@@ -239,12 +221,10 @@ public class PixelPlayer implements Serializable {
                 float centerY = projectile.getY() + (projectile.getHeight() - 32) / 2;
                 hitWall = maze.isWallAtPixel(centerX, centerY, 32, 32);
             } else {
-                // For blades, use normal collision
                 hitWall = maze.isWallAtPixel(projectile.getX(), projectile.getY(),
                         projectile.getWidth(), projectile.getHeight());
             }
 
-            // Remove if out of bounds or hit wall
             if (projectile.getX() < 0 || projectile.getX() > maze.getWidth() * 64 ||
                     projectile.getY() < 0 || projectile.getY() > maze.getHeight() * 64 ||
                     hitWall) {
@@ -269,7 +249,6 @@ public class PixelPlayer implements Serializable {
         return projectileType;
     }
 
-    // Modify the throwProjectileInFacingDirection method to use projectile type
     public void throwProjectileInFacingDirection() {
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastThrowTime >= THROW_COOLDOWN) {
@@ -285,7 +264,6 @@ public class PixelPlayer implements Serializable {
         }
     }
 
-    // Also update the mouse-throw method
     public void throwProjectile(float targetX, float targetY) {
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastThrowTime >= THROW_COOLDOWN) {
@@ -302,7 +280,6 @@ public class PixelPlayer implements Serializable {
         return projectiles;
     }
 
-    // Damage and life methods
     public void takeDamage() {
         if (invulnerable || !alive) return;
 
@@ -346,11 +323,11 @@ public class PixelPlayer implements Serializable {
         return shards;
     }
     public void addShards(int amount) {
-        this.shards += amount; // Always add 10 shards regardless of input amount
+        this.shards += amount;
         System.out.println("+10 shards! Total: " + shards);
     }
     public void collectShard() {
-        addShards(1); // This will give 10 shards due to the method above
+        addShards(1);
     }
     public void deductShards(int amount) {
         this.shards -= amount;
@@ -362,17 +339,15 @@ public class PixelPlayer implements Serializable {
     }
 
     public void increaseProjectileDamage(int amount) {
-        // You'll need to modify Projectile class to support damage increases
-        // For now, we'll just track it
+
         System.out.println("Projectile damage increased by " + amount);
     }
 
-    // Add this method to make enemies drop shards
     public void addShardsFromEnemy(int enemyType) {
         switch (enemyType) {
-            case 1: addShards(5); break;  // Basic enemy
-            case 2: addShards(8); break;  // Fast enemy
-            case 3: addShards(12); break; // Strong enemy
+            case 1: addShards(5); break;
+            case 2: addShards(8); break;
+            case 3: addShards(12); break;
             default: addShards(5); break;
         }
         System.out.println("Collected shards! Total: " + shards);
@@ -399,7 +374,7 @@ public class PixelPlayer implements Serializable {
     }
 
     public void resetSpeed() {
-        this.speed = this.originalSpeed; // Reset to original
+        this.speed = this.originalSpeed;
     }
 
     public float getSpeed() {
@@ -416,7 +391,6 @@ public class PixelPlayer implements Serializable {
         if (startX >= 0 && startX < mazeWidth && startY >= 0 && startY < mazeHeight) {
             exploredTiles[startY][startX] = true;
 
-            // Also mark adjacent starting area
             for (int dy = -1; dy <= 1; dy++) {
                 for (int dx = -1; dx <= 1; dx++) {
                     int adjX = startX + dx;
@@ -473,12 +447,9 @@ public class PixelPlayer implements Serializable {
         return count;
     }
 
-    // Custom serialization to reload sprites after loading
     private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
         ois.defaultReadObject();
-        // Reinitialize transient fields after deserialization
         spriteFrames = new ImageIcon[4][3];
-        // Reload sprites
         loadSpriteFrames();
         System.out.println("Player sprites reloaded after deserialization");
     }

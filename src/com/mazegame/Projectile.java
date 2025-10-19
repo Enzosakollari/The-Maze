@@ -10,31 +10,28 @@ public class Projectile {
 
     private float x, y;
     private float velocityX, velocityY;
-    private int width, height; // Remove the = 32, 32 - make them variable
+    private int width, height;
     private boolean active = true;
     private ImageIcon sprite;
     private int damage = 1;
     private static final float PROJECTILE_SPEED = 8.0f;
     private Direction direction;
-    private String type; // "blade" or "spell"
+    private String type;
 
-    // Constructor with direction AND type
     public Projectile(float startX, float startY, Direction direction, String type) {
         this.x = startX;
         this.y = startY;
         this.direction = direction;
         this.type = type;
 
-        // ADD SIZE LOGIC HERE
         if ("spell".equals(type)) {
-            this.width = 64;  // Big spells
+            this.width = 64;
             this.height = 64;
         } else {
-            this.width = 32;  // Normal blades
+            this.width = 32;
             this.height = 32;
         }
 
-        // Set velocity based on direction
         switch (direction) {
             case UP:
                 velocityX = 0;
@@ -60,7 +57,6 @@ public class Projectile {
         loadSprite();
     }
 
-    // Constructor with target coordinates AND type
     public Projectile(float startX, float startY, float targetX, float targetY, String type) {
         this.x = startX;
         this.y = startY;
@@ -84,7 +80,6 @@ public class Projectile {
             this.velocityX = (dx / length) * PROJECTILE_SPEED;
             this.velocityY = (dy / length) * PROJECTILE_SPEED;
 
-            // Determine direction for sprite
             if (Math.abs(dx) > Math.abs(dy)) {
                 direction = (dx > 0) ? Direction.RIGHT : Direction.LEFT;
             } else {
@@ -96,12 +91,10 @@ public class Projectile {
             direction = Direction.RIGHT;
         }
 
-        // Set damage based on type
         this.damage = "spell".equals(type) ? 2 : 1;
 
         loadSprite();
     }
-    // Keep old constructors for backward compatibility
     public Projectile(float startX, float startY, Direction direction) {
         this(startX, startY, direction, "blade"); // Default to blade
     }
@@ -158,10 +151,8 @@ public class Projectile {
         BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = img.createGraphics();
 
-        // Different colors and shapes for different types
         Color projectileColor;
         if ("spell".equals(type)) {
-            // Spell appearance - magical/energy look
             switch (direction) {
                 case UP: projectileColor = new Color(255, 100, 255); break;    // Pinkish
                 case DOWN: projectileColor = new Color(100, 255, 255); break;  // Cyan
@@ -174,12 +165,10 @@ public class Projectile {
             g2d.setColor(projectileColor);
             g2d.fillOval(8, 8, 16, 16);
 
-            // Add glow effect
             g2d.setColor(new Color(255, 255, 255, 100));
             g2d.fillOval(10, 10, 12, 12);
 
         } else {
-            // Blade appearance
             switch (direction) {
                 case UP: projectileColor = Color.CYAN; break;
                 case DOWN: projectileColor = Color.BLUE; break;
@@ -188,7 +177,6 @@ public class Projectile {
                 default: projectileColor = Color.BLUE;
             }
 
-            // Draw directional dagger shapes
             switch (direction) {
                 case UP:
                     g2d.setColor(projectileColor);

@@ -128,18 +128,15 @@ public class PixelMazePanel extends JPanel {
     private void updateCamera() {
         PixelPlayer player = gameController.getPlayer();
         if (player != null) {
-            // Calculate target camera position (center on player)
             float playerCenterX = player.getX() + player.getWidth() / 2;
             float playerCenterY = player.getY() + player.getHeight() / 2;
 
             float targetX = playerCenterX - viewportWidth / 2;
             float targetY = playerCenterY - viewportHeight / 2;
 
-            // Smooth camera follow
             cameraX = lerp(cameraX, targetX, cameraFollowSpeed);
             cameraY = lerp(cameraY, targetY, cameraFollowSpeed);
 
-            // Keep camera within maze bounds
             PixelMaze maze = gameController.getMaze();
             int mazePixelWidth = maze.getWidth() * TILE_SIZE;
             int mazePixelHeight = maze.getHeight() * TILE_SIZE;
@@ -153,7 +150,6 @@ public class PixelMazePanel extends JPanel {
         return a + (b - a) * t;
     }
 
-    // In PixelMazePanel.java - update the paintComponent method
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -168,7 +164,7 @@ public class PixelMazePanel extends JPanel {
         drawPlayer(g2d);
         drawEnemies(g2d);
         drawProjectiles(g2d);
-        drawMiniMap(g2d); // Add this line
+        drawMiniMap(g2d);
         drawHUD(g2d);
     }
 
@@ -176,13 +172,11 @@ public class PixelMazePanel extends JPanel {
         PixelMaze maze = gameController.getMaze();
         char[][] grid = maze.getGrid();
 
-        // Calculate visible tile range for optimization
         int startTileX = Math.max(0, (int)(cameraX / TILE_SIZE));
         int startTileY = Math.max(0, (int)(cameraY / TILE_SIZE));
         int endTileX = Math.min(maze.getWidth(), (int)((cameraX + viewportWidth) / TILE_SIZE) + 1);
         int endTileY = Math.min(maze.getHeight(), (int)((cameraY + viewportHeight) / TILE_SIZE) + 1);
 
-        // Draw visible tiles only
         for (int y = startTileY; y < endTileY; y++) {
             for (int x = startTileX; x < endTileX; x++) {
                 int screenX = (int)(x * TILE_SIZE - cameraX);
@@ -200,7 +194,6 @@ public class PixelMazePanel extends JPanel {
                 g2d.drawImage(icon.getImage(), x, y, this);
             }
         } else {
-            // Colored fallback
             Color color = getTileColor(tileType);
             g2d.setColor(color);
             g2d.fillRect(x, y, TILE_SIZE, TILE_SIZE);
@@ -234,7 +227,6 @@ public class PixelMazePanel extends JPanel {
     private void drawPlayer(Graphics2D g2d) {
         PixelPlayer player = gameController.getPlayer();
         if (player != null) {
-            // Convert world coordinates to screen coordinates
             int screenX = (int)(player.getX() - cameraX);
             int screenY = (int)(player.getY() - cameraY);
 
@@ -242,7 +234,6 @@ public class PixelMazePanel extends JPanel {
             if (playerSprite != null) {
                 g2d.drawImage(playerSprite.getImage(), screenX, screenY, this);
             } else {
-                // Fallback
                 g2d.setColor(Color.RED);
                 g2d.fillRect(screenX, screenY, player.getWidth(), player.getHeight());
             }
@@ -259,11 +250,9 @@ public class PixelMazePanel extends JPanel {
                 int screenX = (int)(enemy.getX() - cameraX);
                 int screenY = (int)(enemy.getY() - cameraY);
 
-                // Draw enemy sprite (with flashing effect if damaged)
                 ImageIcon enemySprite = enemy.getCurrentSprite();
                 if (enemySprite != null) {
                     if (enemy.isFlashing()) {
-                        // Apply red tint when enemy is flashing from damage
                         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
                         g2d.setColor(Color.RED);
                         g2d.fillRect(screenX, screenY, enemy.getWidth(), enemy.getHeight());
@@ -272,7 +261,6 @@ public class PixelMazePanel extends JPanel {
                     g2d.drawImage(enemySprite.getImage(), screenX, screenY, this);
                 }
 
-                // Draw health bar above enemy
                 drawEnemyHealthBar(g2d, enemy, screenX, screenY);
             }
         }
@@ -281,20 +269,17 @@ public class PixelMazePanel extends JPanel {
     private void drawEnemyHealthBar(Graphics2D g2d, PixelEnemy enemy, int screenX, int screenY) {
         int healthBarWidth = enemy.getWidth();
         int healthBarHeight = 6;
-        int healthBarY = screenY - 10; // Position above enemy
+        int healthBarY = screenY - 10;
 
-        // Health bar background (red)
         g2d.setColor(Color.RED);
         g2d.fillRect(screenX, healthBarY, healthBarWidth, healthBarHeight);
 
-        // Health bar foreground (green) based on current health
         float healthPercent = (float) enemy.getCurrentHealth() / enemy.getMaxHealth();
         int currentHealthWidth = (int)(healthBarWidth * healthPercent);
 
         g2d.setColor(Color.GREEN);
         g2d.fillRect(screenX, healthBarY, currentHealthWidth, healthBarHeight);
 
-        // Health bar border
         g2d.setColor(Color.BLACK);
         g2d.setStroke(new BasicStroke(1));
         g2d.drawRect(screenX, healthBarY, healthBarWidth, healthBarHeight);
@@ -315,45 +300,35 @@ public class PixelMazePanel extends JPanel {
                 if (projectileSprite != null) {
                     g2d.drawImage(projectileSprite.getImage(), screenX, screenY, this);
                 } else {
-                    // Fallback dagger shape
                     g2d.setColor(Color.BLUE);
-                    g2d.fillRect(screenX + 8, screenY + 12, 16, 8); // Blade
+                    g2d.fillRect(screenX + 8, screenY + 12, 16, 8);
                     g2d.setColor(Color.YELLOW);
-                    g2d.fillRect(screenX + 12, screenY + 8, 8, 16); // Handle
+                    g2d.fillRect(screenX + 12, screenY + 8, 8, 16);
                 }
             }
         }
     }
 
-    // In PixelMazePanel.java - update the drawHUD method
     private void drawHUD(Graphics2D g2d) {
         PixelPlayer player = gameController.getPlayer();
 
-        // Draw life icons
         drawLifeIcons(g2d, player.getLives());
 
-        // Show map status and controls
         if (player.hasMap()) {
             g2d.setColor(Color.CYAN);
             g2d.setFont(new Font("Arial", Font.BOLD, 12));
             g2d.drawString("MAP: " + (showMiniMap ? "ON" : "OFF"), 15, getHeight() - 50);
-            g2d.drawString("Press M to toggle mini-map", 15, getHeight() - 35);
         } else {
             g2d.setColor(Color.YELLOW);
             g2d.setFont(new Font("Arial", Font.PLAIN, 12));
-            g2d.drawString("Buy Labyrinth Map in Shop (B)", 15, getHeight() - 35);
         }
 
-        // Optional: Keep the throwing instructions
         g2d.setColor(new Color(255, 255, 255, 180));
         g2d.setFont(new Font("Arial", Font.PLAIN, 12));
-        g2d.drawString("Click to throw daggers at enemies!", 15, getHeight() - 20);
 
-        // Show invulnerability status if needed
         if (player.isInvulnerable()) {
             g2d.setColor(new Color(255, 255, 0, 150));
             g2d.setFont(new Font("Arial", Font.BOLD, 16));
-            g2d.drawString("INVULNERABLE", 150, 90);
         }
     }
     private void drawLifeIcons(Graphics2D g2d, int lives) {
@@ -368,7 +343,6 @@ public class PixelMazePanel extends JPanel {
             if (lifeIcon != null) {
                 g2d.drawImage(lifeIcon.getImage(), x, startY, this);
             } else {
-                // Fallback life icon
                 g2d.setColor(Color.RED);
                 g2d.fillOval(x, startY, iconSize, iconSize);
                 g2d.setColor(Color.WHITE);
@@ -377,13 +351,11 @@ public class PixelMazePanel extends JPanel {
             }
         }
     }
-    // Add this method to toggle mini-map display
     public void setShowMiniMap(boolean show) {
         this.showMiniMap = show;
         repaint();
     }
 
-    // Add this method to draw the mini-map
     private void drawMiniMap(Graphics2D g2d) {
         if (!showMiniMap) return;
 
@@ -391,11 +363,9 @@ public class PixelMazePanel extends JPanel {
         PixelPlayer player = gameController.getPlayer();
         if (maze == null || player == null) return;
 
-        // Position in top-right corner
         int mapX = getWidth() - MINI_MAP_SIZE - MINI_MAP_MARGIN;
         int mapY = MINI_MAP_MARGIN;
 
-        // Draw mini-map background
         g2d.setColor(new Color(0, 0, 0, 180));
         g2d.fillRect(mapX, mapY, MINI_MAP_SIZE, MINI_MAP_SIZE);
         g2d.setColor(Color.WHITE);
@@ -405,10 +375,8 @@ public class PixelMazePanel extends JPanel {
         int mazeWidth = maze.getWidth();
         int mazeHeight = maze.getHeight();
 
-        // Calculate tile size for mini-map
         float tileSize = Math.min((float)MINI_MAP_SIZE / mazeWidth, (float)MINI_MAP_SIZE / mazeHeight);
 
-        // Draw explored areas
         boolean[][] exploredTiles = player.getExploredTiles();
 
         for (int y = 0; y < mazeHeight; y++) {
@@ -416,7 +384,6 @@ public class PixelMazePanel extends JPanel {
                 int screenX = (int)(mapX + x * tileSize);
                 int screenY = (int)(mapY + y * tileSize);
 
-                // Only draw explored tiles or all tiles if player has map
                 if (exploredTiles != null && exploredTiles[y][x]) {
                     char tileType = grid[y][x];
                     Color tileColor = getMiniMapTileColor(tileType);
@@ -426,13 +393,11 @@ public class PixelMazePanel extends JPanel {
             }
         }
 
-        // Draw player position
         int playerMapX = (int)(mapX + (player.getX() / TILE_SIZE) * tileSize);
         int playerMapY = (int)(mapY + (player.getY() / TILE_SIZE) * tileSize);
         g2d.setColor(Color.RED);
         g2d.fillOval(playerMapX - 2, playerMapY - 2, 4, 4);
 
-        // Draw exit position (always visible if player has map)
         if (player.hasMap()) {
             for (int y = 0; y < mazeHeight; y++) {
                 for (int x = 0; x < mazeWidth; x++) {
@@ -455,11 +420,11 @@ public class PixelMazePanel extends JPanel {
 
     private Color getMiniMapTileColor(char tileType) {
         switch (tileType) {
-            case '.': case 'S': return new Color(150, 150, 150); // Path - gray
-            case '#': return new Color(50, 50, 50); // Wall - dark gray
-            case 'T': return Color.YELLOW; // Treasure
-            case 'E': return Color.GREEN; // Exit
-            case 'L': return Color.PINK; // Life potion
+            case '.': case 'S': return new Color(150, 150, 150);
+            case '#': return new Color(50, 50, 50);
+            case 'T': return Color.YELLOW;
+            case 'E': return Color.GREEN;
+            case 'L': return Color.PINK;
             default: return Color.GRAY;
         }
     }
@@ -469,7 +434,6 @@ public class PixelMazePanel extends JPanel {
             renderTimer.stop();
         }
     }
-    // Add this getter method to PixelMazePanel class
     public boolean isMiniMapVisible() {
         return showMiniMap;
     }

@@ -11,8 +11,7 @@ public class EndScreenPanel extends JPanel {
     private Image backgroundImage;
     private int selectedOption = 0;
     private final String[] endOptions = {"PLAY AGAIN", "MAIN MENU", "EXIT"};
-    private ImageIcon arrowIcon; // ADD THIS FIELD
-
+    private ImageIcon arrowIcon;
     private Font dragonSlayerFont;
 
     public EndScreenPanel(boolean playerWon, int treasuresCollected, int totalPoints) {
@@ -24,7 +23,6 @@ public class EndScreenPanel extends JPanel {
 
     private void loadResources() {
         try {
-            // Load DragonSlayer font
             InputStream fontStream = getClass().getResourceAsStream("/dragonslayer.ttf");
             if (fontStream != null) {
                 dragonSlayerFont = Font.createFont(Font.TRUETYPE_FONT, fontStream).deriveFont(36f);
@@ -32,7 +30,6 @@ public class EndScreenPanel extends JPanel {
                 dragonSlayerFont = new Font("Arial", Font.BOLD, 36);
             }
 
-            // Load end screen background - using your end.png image
             InputStream bgStream = getClass().getResourceAsStream("/general/end.png");
             if (bgStream != null) {
                 byte[] bgBytes = bgStream.readAllBytes();
@@ -43,7 +40,6 @@ public class EndScreenPanel extends JPanel {
                 backgroundImage = createFallbackBackground();
             }
 
-            // ADD THIS: Load arrow icon
             InputStream arrowStream = getClass().getResourceAsStream("/general/arrow.png");
             if (arrowStream != null) {
                 ImageIcon originalArrow = new ImageIcon(arrowStream.readAllBytes());
@@ -63,7 +59,6 @@ public class EndScreenPanel extends JPanel {
         }
     }
     private void createFallbackArrow() {
-        // Create a simple fallback arrow if the image is missing
         BufferedImage img = new BufferedImage(40, 40, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = img.createGraphics();
 
@@ -79,13 +74,11 @@ public class EndScreenPanel extends JPanel {
         BufferedImage img = new BufferedImage(800, 600, BufferedImage.TYPE_INT_RGB);
         Graphics2D g2d = img.createGraphics();
 
-        // Create a dark background similar to your game's style
         GradientPaint gradient = new GradientPaint(0, 0, new Color(20, 20, 40),
                 800, 600, new Color(10, 10, 20));
         g2d.setPaint(gradient);
         g2d.fillRect(0, 0, 800, 600);
 
-        // Add "GAME OVER" text in the fallback
         g2d.setColor(Color.WHITE);
         g2d.setFont(new Font("Arial", Font.BOLD, 48));
         g2d.drawString("GAME OVER", 280, 150);
@@ -128,13 +121,13 @@ public class EndScreenPanel extends JPanel {
 
     private void handleSelection() {
         switch (selectedOption) {
-            case 0: // PLAY AGAIN
+            case 0:
                 playAgain();
                 break;
-            case 1: // MAIN MENU
+            case 1:
                 returnToMainMenu();
                 break;
-            case 2: // EXIT
+            case 2:
                 System.exit(0);
                 break;
         }
@@ -162,30 +155,25 @@ public class EndScreenPanel extends JPanel {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
 
-        // Enable anti-aliasing for smoother text
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-        // Draw the background image (your end.png)
         if (backgroundImage != null) {
             g2d.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
         }
 
-        // Draw arrows for menu selection
         drawArrows(g2d);
     }
     private void drawArrows(Graphics2D g2d) {
-        // Define positions for the arrows based on where the text is in your image
-        int[] optionYPositions = {270, 335, 390}; // Adjust these based on your image layout
-        int arrowX = 200; // Position to the left of the text
+        int[] optionYPositions = {270, 335, 390};
+        int arrowX = 200;
 
         for (int i = 0; i < endOptions.length; i++) {
             if (i == selectedOption) {
                 if (arrowIcon != null) {
-                    int arrowY = optionYPositions[i] - 20; // Adjust Y position
+                    int arrowY = optionYPositions[i] - 20;
                     g2d.drawImage(arrowIcon.getImage(), arrowX, arrowY, this);
                 } else {
-                    // Fallback: red > character
                     g2d.setColor(Color.RED);
                     g2d.setFont(new Font("Arial", Font.BOLD, 36));
                     g2d.drawString(">", arrowX, optionYPositions[i]);
@@ -195,9 +183,8 @@ public class EndScreenPanel extends JPanel {
     }
 
     private void drawRedArrows(Graphics2D g2d) {
-        // Define positions for the arrows based on where the text is in your image
-        int[] optionYPositions = {310, 390, 440}; // Adjust these based on your image layout
-        int arrowX = 250; // Position to the left of the text
+        int[] optionYPositions = {310, 390, 440};
+        int arrowX = 250;
 
         for (int i = 0; i < endOptions.length; i++) {
             if (i == selectedOption) {
@@ -207,13 +194,10 @@ public class EndScreenPanel extends JPanel {
     }
 
     private void drawRedArrow(Graphics2D g2d, int x, int y) {
-        // Set red color for the arrow
         g2d.setColor(Color.RED);
 
-        // Make the arrow thicker and larger
         g2d.setFont(new Font("Arial", Font.BOLD, 36));
 
-        // Simply draw the > character
         g2d.drawString(">", x, y);
     }
 
