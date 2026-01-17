@@ -1,6 +1,6 @@
 # The Maze - 2D Java Game
 
-![Banner Image](https://github.com/Enzosakollari/The-Maze/blob/master/TjgOtM.png?raw=true)
+![In-Game Action](https://github.com/Enzosakollari/The-Maze/blob/master/KA8N4C%20(1).png?raw=true)
 
 ## 💬 Overview
 
@@ -51,8 +51,6 @@ Here are some screenshots of the game to give you a better idea of the gameplay 
 
 ![Shop Interface](https://github.com/Enzosakollari/The-Maze/blob/master/u0ej_c.png?raw=true)
 
-
-![In-Game Action](https://github.com/Enzosakollari/The-Maze/blob/master/KA8N4C%20(1).png?raw=true)
 
 
 ![Maze Map](https://github.com/Enzosakollari/The-Maze/blob/master/KA8N4C.png?raw=true)
